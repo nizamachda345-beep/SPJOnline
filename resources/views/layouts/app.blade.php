@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
 
     <style>
         :root {
@@ -750,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-VANTA.NET({
+VANTA.WAVES({
   el: "body",
   mouseControls: true,
   touchControls: true,
@@ -759,10 +759,11 @@ VANTA.NET({
   minWidth: 200.00,
   scale: 1.00,
   scaleMobile: 1.00,
-  color: 0xffdd00,
-  backgroundColor: 0x1b133a,
-  spacing: 16.00,
-  showDots: false
+  color: 0x909090,
+  shininess: 5.00,
+  waveHeight: 6.00,
+  waveSpeed: 0.85,
+  zoom: 0.88
 })
 </script>
 </body>
