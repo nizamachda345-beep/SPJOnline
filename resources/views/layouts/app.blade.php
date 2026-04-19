@@ -33,7 +33,7 @@
             background: var(--body-bg);
             font-family: 'Inter', sans-serif;
             color: var(--text-dark);
-            font-size: 0.95rem;
+            font-size: 0.7rem;
             line-height: 1.6;
         }
 
@@ -43,12 +43,12 @@
             letter-spacing: 0.005em;
         }
 
-        h1 { font-size: 1.5rem; }
-        h2 { font-size: 1.25rem; }
-        h3 { font-size: 1.125rem; }
-        h4 { font-size: 1rem; }
-        h5 { font-size: 0.95rem; }
-        h6 { font-size: 0.875rem; }
+        h1 { font-size: 1.15rem; }
+        h2 { font-size: 1.1rem; }
+        h3 { font-size: 0.95rem; }
+        h4 { font-size: 0.875rem; }
+        h5 { font-size: 0.8rem; }
+        h6 { font-size: 0.7rem; }
 
         .navbar {
             background: var(--surface);
@@ -62,7 +62,7 @@
         }
 
         .navbar-brand {
-            font-size: 1.1rem;
+            font-size: 1rem;
             letter-spacing: .025em;
         }
 
@@ -112,7 +112,7 @@
             border-radius: .85rem;
             margin: .2rem 0;
             transition: all .15s ease-in-out;
-            font-size: 0.925rem;
+            font-size: 0.875rem;
         }
 
         .sidebar .nav-link:hover {
@@ -191,7 +191,7 @@
         }
 
         .btn {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             padding: 0.625rem 1.25rem;
             border-radius: 0.5rem;
             font-weight: 500;
@@ -226,7 +226,7 @@
         .table td {
             padding: 0.875rem 0.75rem;
             vertical-align: middle;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .card.border-start-gold {
@@ -247,7 +247,7 @@
         .input-group-text {
             border-radius: .75rem;
             padding: 0.5rem 0.75rem;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .input-group-text {
