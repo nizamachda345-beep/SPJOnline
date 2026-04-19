@@ -220,6 +220,35 @@
             color: #0f172a !important;
         }
 
+        /* Text Color Utilities for Background Contrast */
+        .bg-dark, .bg-primary, .bg-secondary, .bg-success, .bg-danger, .bg-warning, .bg-info {
+            color: #ffffff !important;
+        }
+
+        .bg-dark h1, .bg-dark h2, .bg-dark h3, .bg-dark h4, .bg-dark h5, .bg-dark h6,
+        .bg-primary h1, .bg-primary h2, .bg-primary h3, .bg-primary h4, .bg-primary h5, .bg-primary h6,
+        .bg-secondary h1, .bg-secondary h2, .bg-secondary h3, .bg-secondary h4, .bg-secondary h5, .bg-secondary h6,
+        .bg-success h1, .bg-success h2, .bg-success h3, .bg-success h4, .bg-success h5, .bg-success h6,
+        .bg-danger h1, .bg-danger h2, .bg-danger h3, .bg-danger h4, .bg-danger h5, .bg-danger h6,
+        .bg-warning h1, .bg-warning h2, .bg-warning h3, .bg-warning h4, .bg-warning h5, .bg-warning h6,
+        .bg-info h1, .bg-info h2, .bg-info h3, .bg-info h4, .bg-info h5, .bg-info h6 {
+            color: #ffffff !important;
+        }
+
+        .bg-light, .bg-white,
+        .bg-accent-primary, .bg-accent-secondary, .bg-accent-success, .bg-accent-warning {
+            color: #1f2937 !important;
+        }
+
+        .bg-light h1, .bg-light h2, .bg-light h3, .bg-light h4, .bg-light h5, .bg-light h6,
+        .bg-white h1, .bg-white h2, .bg-white h3, .bg-white h4, .bg-white h5, .bg-white h6,
+        .bg-accent-primary h1, .bg-accent-primary h2, .bg-accent-primary h3, .bg-accent-primary h4, .bg-accent-primary h5, .bg-accent-primary h6,
+        .bg-accent-secondary h1, .bg-accent-secondary h2, .bg-accent-secondary h3, .bg-accent-secondary h4, .bg-accent-secondary h5, .bg-accent-secondary h6,
+        .bg-accent-success h1, .bg-accent-success h2, .bg-accent-success h3, .bg-accent-success h4, .bg-accent-success h5, .bg-accent-success h6,
+        .bg-accent-warning h1, .bg-accent-warning h2, .bg-accent-warning h3, .bg-accent-warning h4, .bg-accent-warning h5, .bg-accent-warning h6 {
+            color: #1f2937 !important;
+        }
+
         .table-hover tbody tr:hover {
             background: rgba(15,23,42,.04);
         }
@@ -237,6 +266,53 @@
 
         .card.border-start-navy {
             border-left: 4px solid #1d4ed8 !important;
+        }
+
+        /* Alert Colors - Ensuring Text is Readable */
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+
+        /* Badge Colors for Visibility */
+        .badge {
+            font-weight: 600;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .badge.bg-secondary {
+            color: #ffffff;
+        }
+
+        .badge.bg-primary,
+        .badge.bg-success,
+        .badge.bg-danger,
+        .badge.bg-warning,
+        .badge.bg-info {
+            color: #ffffff;
+        }
+
+        .badge.bg-light {
+            color: #1f2937;
         }
 
         .alert,

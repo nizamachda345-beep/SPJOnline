@@ -9,7 +9,7 @@
             <p class="text-muted">ID Pengajuan: <span class="fw-bold">#{{ $submission->id }}</span> | Nomor SPM: <span class="fw-bold text-dark">{{ $submission->nomor_spp_spm }}</span></p>
         </div>
         <div class="col-md-4 text-md-end">
-            <a href="{{ route('bpk.monitoring') }}" class="btn btn-outline-secondary shadow-sm">
+            <a href="{{ route('bpk.monitoring') }}" class="btn btn-secondary shadow-sm">
                 <i class="fas fa-arrow-left me-1"></i> Kembali
             </a>
         </div>
@@ -56,40 +56,83 @@
                 </div>
             </div>
 
-            {{-- Card Jejak Digital (Audit Trail) --}}
-            <div class="card border-0 shadow-sm rounded-3 bg-dark text-white">
-                <div class="card-header border-secondary py-3">
-                    <h6 class="m-0 fw-bold"><i class="fas fa-fingerprint me-2 text-warning"></i>Autentikasi Digital</h6>
+            {{-- Card Jejak Digital (Audit Trail) - Versi Sinkron & Professional --}}
+<div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="background: #1a1d21;">
+    <div class="card-header border-0 py-3" style="background: rgba(255, 255, 255, 0.03);">
+        <h6 class="m-0 fw-bold text-white">
+            <i class="fas fa-fingerprint me-2 text-warning"></i>Autentikasi Digital
+        </h6>
+    </div>
+    
+    <div class="card-body p-0">
+        {{-- Row 1: Operator --}}
+        <div class="p-3 border-bottom border-secondary border-opacity-25 hover-audit">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <small class="text-warning d-block fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Perekaman Input</small>
+                    <p class="mb-0 text-white fw-semibold small">{{ $submission->user->name }}</p>
+                    <small class="text-muted extra-small">Operator SKPD</small>
                 </div>
-                <div class="card-body p-0">
-                    <div class="p-3 border-bottom border-secondary">
-                        <small class="text-warning d-block fw-bold mb-1">Perekaman Input (Operator)</small>
-                        <p class="small mb-0">{{ $submission->user->name }}</p>
-                        <small class="text-muted">{{ $submission->created_at->format('d/m/Y H:i:s') }} WITA</small>
-                    </div>
-                    
-                    @if($submission->verified_at)
-                    <div class="p-3 border-bottom border-secondary">
-                        <small class="text-info d-block fw-bold mb-1">Verifikasi (Kasie BUD)</small>
-                        <p class="small mb-0 fw-bold">{{ $submission->verified_by_name ?? 'Nama Tidak Terdeteksi' }}</p>
-                        <p class="small mb-0">Telah diperiksa kesesuaian administrasi.</p>
-                        <small class="text-muted">{{ \Carbon\Carbon::parse($submission->verified_at)->format('d/m/Y H:i:s') }} WITA</small>
-                    </div>
-                    @endif
-
-                    @if($submission->validated_at)
-                    <div class="p-3">
-                        <small class="text-success d-block fw-bold mb-1">Pengesahan (Kabid)</small>
-                        <p class="small mb-0 fw-bold">{{ $submission->validated_by_name ?? 'Nama Tidak Terdeteksi' }}</p>
-                        <p class="small mb-0">Dokumen dinyatakan valid dan disetujui.</p>
-                        <small class="text-muted">{{ \Carbon\Carbon::parse($submission->validated_at)->format('d/m/Y H:i:s') }} WITA</small>
-                    </div>
-                    @endif
-                </div>
-                <div class="card-footer border-secondary text-center">
-                    <small class="text-muted" style="font-size: 0.7rem;">Sistem iDJ Kabupaten Bolaang Mongondow</small>
+                <div class="text-end">
+                    <small class="text-muted d-block extra-small">{{ $submission->created_at->format('d/m/Y') }}</small>
+                    <small class="text-muted extra-small">{{ $submission->created_at->format('H:i:s') }} WITA</small>
                 </div>
             </div>
+        </div>
+        
+        {{-- Row 2: Verifikasi --}}
+        @if($submission->verified_at)
+        <div class="p-3 border-bottom border-secondary border-opacity-25 hover-audit">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <small class="text-info d-block fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Verifikasi Administrasi</small>
+                    <p class="mb-0 text-white fw-semibold small">{{ $submission->verified_by_name ?? 'Verifikator' }}</p>
+                    <small class="text-white-50 extra-small">Kasie BUD</small>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted d-block extra-small">{{ \Carbon\Carbon::parse($submission->verified_at)->format('d/m/Y') }}</small>
+                    <small class="text-muted extra-small">{{ \Carbon\Carbon::parse($submission->verified_at)->format('H:i:s') }} WITA</small>
+                </div>
+            </div>
+            <div class="mt-2 py-1 px-2 rounded-2 bg-info bg-opacity-10">
+                <p class="extra-small text-info mb-0"><i class="fas fa-check-circle me-1"></i> Administrasi Sesuai</p>
+            </div>
+        </div>
+        @endif
+
+        {{-- Row 3: Pengesahan --}}
+        @if($submission->validated_at)
+        <div class="p-3 hover-audit">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <small class="text-success d-block fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Pengesahan Final</small>
+                    <p class="mb-0 text-white fw-semibold small">{{ $submission->validated_by_name ?? 'Kabid' }}</p>
+                    <small class="text-white-50 extra-small">Kabid Perbendaharaan</small>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted d-block extra-small">{{ \Carbon\Carbon::parse($submission->validated_at)->format('d/m/Y') }}</small>
+                    <small class="text-muted extra-small">{{ \Carbon\Carbon::parse($submission->validated_at)->format('H:i:s') }} WITA</small>
+                </div>
+            </div>
+            <div class="mt-2 py-1 px-2 rounded-2 bg-success bg-opacity-10">
+                <p class="extra-small text-success mb-0"><i class="fas fa-shield-check me-1"></i> Dokumen Valid & Disetujui</p>
+            </div>
+        </div>
+        @endif
+    </div>
+
+    <div class="card-footer border-0 py-3 text-center" style="background: rgba(255, 255, 255, 0.02);">
+        <small class="text-muted uppercase fw-bold" style="font-size: 0.6rem; letter-spacing: 1px;">
+            Integritas Data Terjamin iDJ
+        </small>
+    </div>
+</div>
+
+<style>
+    .extra-small { font-size: 0.7rem; }
+    .hover-audit:hover { background: rgba(255,255,255, 0.02); transition: 0.3s; }
+    .rounded-4 { border-radius: 1rem; }
+</style>
         </div>
 
         {{-- Sisi Kanan: Daftar Dokumen --}}

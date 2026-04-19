@@ -22,7 +22,7 @@
                      class="me-3" 
                      style="width: 60px; height: 60px; object-fit: contain;">
                 <div>
-                    <h4 class="fw-bold text-dark mb-1"><i class="fas fa-chart-line me-2"></i>Dashboard Audit - BPK</h4>
+                    <h4 class="fw-bold text-dark mb-1"><i></i>Dashboard Audit - BPK</h4>
                     <p class="text-muted small mb-0">Pemantauan real-time jejak digital berkas SPP/SPM Pemkab Bolmong.</p>
                 </div>
             </div>
