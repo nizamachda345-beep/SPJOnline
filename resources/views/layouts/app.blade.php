@@ -33,22 +33,22 @@
             background: var(--body-bg);
             font-family: 'Inter', sans-serif;
             color: var(--text-dark);
-            font-size: 0.92rem;
-            line-height: 1.55;
+            font-size: 0.95rem;
+            line-height: 1.6;
         }
 
         h1, h2, h3, h4, h5, h6 {
-            margin-bottom: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.01em;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.005em;
         }
 
-        h1 { font-size: 1.75rem; }
-        h2 { font-size: 1.45rem; }
-        h3 { font-size: 1.25rem; }
-        h4 { font-size: 1.1rem; }
-        h5 { font-size: 1rem; }
-        h6 { font-size: 0.9rem; }
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.25rem; }
+        h3 { font-size: 1.125rem; }
+        h4 { font-size: 1rem; }
+        h5 { font-size: 0.95rem; }
+        h6 { font-size: 0.875rem; }
 
         .navbar {
             background: var(--surface);
@@ -62,7 +62,7 @@
         }
 
         .navbar-brand {
-            font-size: 1rem;
+            font-size: 1.1rem;
             letter-spacing: .025em;
         }
 
@@ -108,11 +108,11 @@
         .sidebar .nav-link {
             color: #495057;
             font-weight: 500;
-            padding: .85rem 1.15rem;
+            padding: .875rem 1.1rem;
             border-radius: .85rem;
             margin: .2rem 0;
             transition: all .15s ease-in-out;
-            font-size: 0.95rem;
+            font-size: 0.925rem;
         }
 
         .sidebar .nav-link:hover {
@@ -154,11 +154,11 @@
         .card-header {
             background: var(--surface);
             border-bottom: 1px solid var(--border-muted);
-            padding: 0.95rem 1rem;
+            padding: 1rem 1.125rem;
         }
 
         .card-body {
-            padding: 1.1rem;
+            padding: 1.25rem;
         }
 
         .data-label {
@@ -190,6 +190,13 @@
             opacity: .95;
         }
 
+        .btn {
+            font-size: 0.9rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+        }
+
         .bg-accent-primary {
             background: var(--accent-primary) !important;
         }
@@ -217,9 +224,9 @@
 
         .table th,
         .table td {
-            padding: 1rem 0.85rem;
+            padding: 0.875rem 0.75rem;
             vertical-align: middle;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .card.border-start-gold {
@@ -240,6 +247,7 @@
         .input-group-text {
             border-radius: .75rem;
             padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
         }
 
         .input-group-text {
@@ -465,7 +473,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('submissions*') ? 'active' : '' }}" href="{{ route('submissions.index') }}">
-                            <i class="fas fa-history me-2"></i> Riwayat Pengajuan
+                            <i class="fas fa-history me-2"></i> History Pengajuan
                         </a>
                     </li>
                     @endrole
@@ -504,7 +512,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('departments.*') ? 'active fw-bold' : '' }}" href="{{ route('departments.index') }}">
-                            <i class="fas fa-building me-2"></i> Manajemen Dinas
+                            <i class="fas fa-building me-2"></i> Manajemen SKPD
                         </a>
                     </li>
                     @endrole
@@ -513,8 +521,8 @@
                     @hasanyrole('kabid_perbendaharaan|kasie_bud|super_admin')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('history*') ? 'active' : '' }}" href="{{ route('history.index') }}">
-                            <i class="fas fa-history me-2 text-success"></i>
-                            <span>History Berkas</span>
+                            <i class="fas fa-history me-2"></i>
+                            <span>History</span>
                         </a>
                     </li>
                     @endhasanyrole
@@ -566,7 +574,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('submissions*') ? 'active' : '' }}" href="{{ route('submissions.index') }}">
-                            <i class="fas fa-history me-2"></i> Riwayat Pengajuan
+                            <i class="fas fa-history me-2"></i> History Pengajuan
                         </a>
                     </li>
                     @endrole
@@ -614,8 +622,8 @@
                     @hasanyrole('kabid_perbendaharaan|kasie_bud|super_admin')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('history*') ? 'active' : '' }}" href="{{ route('history.index') }}">
-                            <i class="fas fa-history me-2 text-success"></i>
-                            <span>History Berkas</span>
+                            <i class="fas fa-history me-2"></i>
+                            <span>History</span>
                         </a>
                     </li>
                     @endhasanyrole

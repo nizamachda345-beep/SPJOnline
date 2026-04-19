@@ -33,8 +33,9 @@
 
     <div class="row pt-2 mb-2 align-items-center">
         <div class="col-md-8">
-            <h4 class="fw-bold text-uppercase mb-1"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard Super Admin</h4>
+            <h4 class="fw-bold text-uppercase mb-1"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard</h4>
             <p class="text-slate small mb-0">Ringkasan sistem iDJ Kabupaten Bolaang Mongondow.</p>
+            
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
             <a href="{{ route('admin.monitoring') }}" class="btn btn-primary btn-pill shadow-sm px-4 btn-transition">
@@ -91,7 +92,7 @@
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center justify-content-between gap-3">
                         <div>
-                            <span class="text-muted small text-uppercase fw-bold">Total SKPD/Dinas</span>
+                            <span class="text-muted small text-uppercase fw-bold">SKPD/Dinas</span>
                             <h2 class="text-dark fw-semibold mb-0">{{ $stats['dinas'] ?? 0 }}</h2>
                         </div>
                         <span class="text-info fs-3"><i class="fas fa-building"></i></span>

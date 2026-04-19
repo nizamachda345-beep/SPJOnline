@@ -9,14 +9,14 @@
         <div class="card-body">
             <form action="{{ url()->current() }}" method="GET" class="row g-3">
                 <div class="col-md-2">
-                    <label class="small fw-bold text-uppercase text-muted">Nomor SPP/SPM</label>
-                    <input type="text" name="nomor" class="form-control shadow-none" placeholder="Cari nomor..." value="{{ request('nomor') }}">
+                    <label class="small fw-bold text-uppercase text-muted">SPP/SPM</label>
+                    <input type="text" name="nomor" class="form-control shadow-none" placeholder="..." value="{{ request('nomor') }}">
                 </div>
 
                 <div class="col-md-2">
-                    <label class="small fw-bold text-uppercase text-muted">Asal Instansi</label>
+                    <label class="small fw-bold text-uppercase text-muted">SKPD</label>
                     <select name="dinas" class="form-select shadow-none">
-                        <option value="">-- Semua Dinas --</option>
+                        <option value=""> Pilih SKPD </option>
                         @foreach($departments as $d)
                             <option value="{{ $d->id }}" {{ request('dinas') == $d->id ? 'selected' : '' }}>
                                 {{ $d->nama_dinas }}
@@ -26,25 +26,25 @@
                 </div>
 
                 <div class="col-md-2">
-                    <label class="small fw-bold text-uppercase text-muted">Tanggal Input</label>
+                    <label class="small fw-bold text-uppercase text-muted">Tanggal</label>
                     <input type="date" name="tanggal" class="form-control shadow-none" value="{{ request('tanggal') }}">
                 </div>
 
                 <div class="col-md-2">
-                    <label class="small fw-bold text-uppercase text-muted">Judul Kegiatan</label>
-                    <input type="text" name="kegiatan" class="form-control shadow-none" placeholder="Cari judul kegiatan..." value="{{ request('kegiatan') }}">
+                    <label class="small fw-bold text-uppercase text-muted">Kegiatan</label>
+                    <input type="text" name="kegiatan" class="form-control shadow-none" placeholder="..." value="{{ request('kegiatan') }}">
                 </div>
 
                 <div class="col-md-2">
-                    <label class="small fw-bold text-uppercase text-muted">Min. Nominal (Rp)</label>
-                    <input type="number" name="min_nominal" class="form-control shadow-none" placeholder="Contoh: 10000000" value="{{ request('min_nominal') }}">
+                    <label class="small fw-bold text-uppercase text-muted">Nominal</label>
+                    <input type="number" name="min_nominal" class="form-control shadow-none" placeholder="..." value="{{ request('min_nominal') }}">
                 </div>
 
                 <div class="col-md-2 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-primary btn-pill w-100" title="Terapkan Filter">
-                        <i class="fas fa-search me-2"></i>
+                    <button type="submit" class="btn btn-primary btn-pill" title="Terapkan Filter">
+                        <i class="fas fa-search"></i>
                     </button>
-                    <a href="{{ url()->current() }}" class="btn btn-light btn-pill border w-100" title="Bersihkan Filter">
+                    <a href="{{ url()->current() }}" class="btn btn-light btn-pill border" title="Bersihkan Filter">
                         <i class="fas fa-sync-alt"></i>
                     </a>
                 </div>
@@ -58,7 +58,7 @@
                 <h5 class="mb-0 fw-bold text-primary"><i class="fas fa-search me-2"></i>Monitoring Berkas Global</h5>
                 <small class="text-muted">Lihat status terkini untuk keseluruhan pengajuan.</small>
             </div>
-            <span class="badge bg-light text-dark border">Mode: {{ auth()->user()->role_label }}</span>
+            <span class="badge bg-primary  border"> {{ auth()->user()->role_label }}</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
