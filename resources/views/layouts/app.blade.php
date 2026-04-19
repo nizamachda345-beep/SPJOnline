@@ -19,15 +19,15 @@
         :root {
             color-scheme: light;
             --body-bg: transparent;
-            --surface: rgba(255, 255, 255, 0.95);
-            --surface-soft: rgba(248, 249, 250, 0.9);
-            --border-muted: rgba(255, 255, 255, 0.1);
-            --text-muted: rgba(255, 255, 255, 0.7);
-            --text-dark: #ffffff;
-            --accent-primary: rgba(230, 237, 255, 0.9);
-            --accent-secondary: rgba(238, 242, 247, 0.9);
-            --accent-success: rgba(231, 245, 234, 0.9);
-            --accent-warning: rgba(255, 247, 230, 0.9);
+            --surface: rgba(255, 255, 255, 0.97);
+            --surface-soft: rgba(248, 249, 250, 0.95);
+            --border-muted: rgba(33, 37, 41, 0.08);
+            --text-muted: #6c757d;
+            --text-dark: #1f2937;
+            --accent-primary: #e6edff;
+            --accent-secondary: #eef2f7;
+            --accent-success: #e7f5ea;
+            --accent-warning: #fff7e6;
         }
 
         body {
