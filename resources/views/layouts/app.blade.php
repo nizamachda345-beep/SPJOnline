@@ -12,25 +12,27 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
 
     <style>
         :root {
             color-scheme: light;
-            --body-bg: #f4f7f8;
-            --surface: #ffffff;
-            --surface-soft: #f8f9fa;
-            --border-muted: rgba(33,37,41,.08);
-            --text-muted: #6c757d;
-            --text-dark: #1f2937;
-            --accent-primary: #e6edff;
-            --accent-secondary: #eef2f7;
-            --accent-success: #e7f5ea;
-            --accent-warning: #fff7e6;
+            --body-bg: transparent;
+            --surface: rgba(255, 255, 255, 0.95);
+            --surface-soft: rgba(248, 249, 250, 0.9);
+            --border-muted: rgba(255, 255, 255, 0.1);
+            --text-muted: rgba(255, 255, 255, 0.7);
+            --text-dark: #ffffff;
+            --accent-primary: rgba(230, 237, 255, 0.9);
+            --accent-secondary: rgba(238, 242, 247, 0.9);
+            --accent-success: rgba(231, 245, 234, 0.9);
+            --accent-warning: rgba(255, 247, 230, 0.9);
         }
 
         body {
             min-height: 100vh;
-            background: var(--body-bg);
+            background: transparent;
             font-family: 'Inter', sans-serif;
             color: var(--text-dark);
             font-size: 0.7rem;
@@ -140,7 +142,7 @@
             }
             .main-content {
                 margin-left: 0;
-                padding: 1rem;
+                padding: 0.5rem;
             }
         }
 
@@ -191,8 +193,8 @@
         }
 
         .btn {
-            font-size: 0.85rem;
-            padding: 0.625rem 1.25rem;
+            font-size: 0.75rem;
+            padding: 0.5rem 0.75rem;
             border-radius: 0.5rem;
             font-weight: 500;
         }
@@ -226,7 +228,7 @@
         .table td {
             padding: 0.875rem 0.75rem;
             vertical-align: middle;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
         }
 
         .card.border-start-gold {
@@ -641,7 +643,7 @@
         @endauth
 
         <main class="{{ Auth::check() ? 'col-md-9 main-content' : 'col-md-12' }}">
-            <div id="alert-container" class="mb-4">
+            <div id="alert-container" class="mb-2">
                 @if(session('success'))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
@@ -745,6 +747,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+</script>
+
+<script>
+VANTA.NET({
+  el: "body",
+  mouseControls: true,
+  touchControls: true,
+  gyroControls: false,
+  minHeight: 200.00,
+  minWidth: 200.00,
+  scale: 1.00,
+  scaleMobile: 1.00,
+  color: 0xffdd00,
+  backgroundColor: 0x1b133a,
+  spacing: 16.00,
+  showDots: false
+})
 </script>
 </body>
 </html>

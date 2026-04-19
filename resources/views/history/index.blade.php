@@ -6,13 +6,13 @@
     <div class="d-flex justify-content-between align-items-center pt-2 mb-3">
         <div>
             <nav aria-label="breadcrumb">
-                <ol class="breadcrumb bg-white shadow-sm px-3 py-1 rounded-pill mb-1" style="width: fit-content;">
+                <ol class="breadcrumb mb-1" style="width: fit-content;">
                     <li class="breadcrumb-item small"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none text-muted">Dashboard</a></li>
                     <li class="breadcrumb-item small active text-success fw-bold" aria-current="page">Arsip Disetujui</li>
                 </ol>
             </nav>
             <h4 class="fw-bold text-dark m-0">
-                <i class="fas fa-clipboard-check text-success me-2"></i>Arsip Berkas Selesai
+                <i class="fas fa-clipboard-check me-2 text-success"></i>Arsip Dokumen Juara
             </h4>
             <p class="text-muted small mb-0">Daftar seluruh berkas yang telah melewati proses validasi dan pengesahan.</p>
         </div>
@@ -26,7 +26,7 @@
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light border-0"><i class="fas fa-search text-muted"></i></span>
                         <input type="text" name="search" class="form-control border-light-subtle" 
-                               placeholder="Cari No. SPP/SPM, Nama Kegiatan, atau Dinas..." value="{{ request('search') }}">
+                               placeholder="No. SPP/SPM, Kegiatan, SKPD..." value="{{ request('search') }}">
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-md-2">
                     <button type="submit" class="btn btn-dark btn-sm w-100 rounded-pill shadow-sm">
-                        <i class="fas fa-filter me-1"></i> Filter Data
+                        <i class="fas fa-filter me-1"></i> Filter
                     </button>
                 </div>
                 <div class="col-md-2">
@@ -64,6 +64,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        
                         @forelse($histories as $h)
                         <tr>
                             <td class="ps-4">
@@ -73,7 +74,7 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-white text-dark border border-light-subtle px-3 py-2 rounded-3 shadow-sm font-monospace">
+                                <span class="badge bg-white text-dark border border-light-subtle px-3 py-2 rounded-3 shadow-sm ">
                                     {{ $h->nomor_spp_spm }}
                                 </span>
                             </td>
@@ -82,7 +83,7 @@
                                 <div class="extra-small text-muted">{{ $h->updated_at->format('H:i') }} WITA</div>
                             </td>
                             <td>
-                                <div class="fw-bold text-success fs-6">
+                                <div class="fw-bold text-success fs-8">
                                     Rp {{ number_format($h->total_pencairan, 0, ',', '.') }}
                                 </div>
                                 <div class="extra-small text-muted uppercase fw-bold">Verified</div>
@@ -99,7 +100,7 @@
                         <tr>
                             <td colspan="5" class="text-center py-5">
                                 <div class="py-4 text-center">
-                                    <img src="https://illustrations.popsy.co/blue/empty-box.svg" alt="Empty" style="width: 120px;" class="mb-3 opacity-50">
+                                    <!-- <img src="https://www.svgrepo.com/svg/489659/empty-box" alt="Empty" style="width: 120px;" class="mb-3 opacity-50"> -->
                                     <h6 class="text-dark fw-bold">Data Tidak Ditemukan</h6>
                                     <p class="text-muted small">Coba sesuaikan kata kunci atau filter tanggal Anda.</p>
                                 </div>

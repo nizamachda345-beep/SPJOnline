@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
         <div>
             <h4 class="fw-bold text-primary mb-0">Detail Riwayat Arsip</h4>
             <p class="text-muted small">Melihat rincian berkas yang telah diproses oleh sistem.</p>

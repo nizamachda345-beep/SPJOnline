@@ -65,8 +65,8 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-dark">
                         <tr>
-                            <th class="ps-3">Asal Dinas</th>
-                            <th>Nomor SPP/SPM</th>
+                            <th class="ps-3">SKPD</th>
+                            <th>No. SPP/SPM</th>
                             <th>Judul Kegiatan</th>
                             <th>Status</th>
                             <th class="text-center">Aksi</th>

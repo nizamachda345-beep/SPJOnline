@@ -5,7 +5,7 @@
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
             <h5 class="mb-0 fw-bold text-primary">
-                <i class="fas fa-users-cog me-2"></i>Daftar Pengguna Sistem
+                <i class="fas fa-users-cog me-2"></i>Manajemen User
             </h5>
             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahUser">
                 <i class="fas fa-user-plus me-1"></i> Tambah Akun
@@ -57,7 +57,59 @@
         </form>
     </div>
 </div>
-        <div class="card-body p-0">
+
+        <!-- Modal Tambah User -->
+        <div class="modal fade" id="modalTambahUser" tabindex="-1">
+            <div class="modal-dialog">
+                <form action="{{ route('users.store') }}" method="POST" class="modal-content">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Tambah Pengguna Baru</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Nama Lengkap</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Email</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Password</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Konfirmasi Password</label>
+                            <input type="password" name="password_confirmation" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Instansi</label>
+                            <select name="department_id" class="form-select" required>
+                                <option value="">Pilih Instansi</option>
+                                @foreach($departments as $d)
+                                    <option value="{{ $d->id }}">{{ $d->nama_dinas }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Role / Jabatan</label>
+                            <select name="role" class="form-select" required>
+                                <option value="">Pilih Role</option>
+                                @foreach($roles as $r)
+                                    <option value="{{ $r->name }}">{{ $r->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Tambah User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
