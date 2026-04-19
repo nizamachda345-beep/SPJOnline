@@ -106,7 +106,7 @@
                                 {{-- Tombol Sahkan --}}
                                 <form action="{{ route('validasi.sahkan', $submission->id) }}" method="POST">
                                     @csrf
-                                    <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow-sm" onclick="return confirm('Apakah Bapak/Ibu yakin ingin mengesahkan pengajuan ini secara final?')">
+                                    <button type="submit" class="btn btn-success btn-lg px-5 fw-bold shadow-sm" data-confirm="Apakah Bapak/Ibu yakin ingin mengesahkan pengajuan ini secara final?">
                                         <i class="fas fa-file-signature me-2"></i> SAHKAN SEKARANG
                                     </button>
                                 </form>

@@ -40,7 +40,7 @@
                                     <i class="fas fa-eye me-1"></i> Detail
                                 </a>
 
-                                <form action="{{ route('validasi.sahkan', $s->id) }}" method="POST" onsubmit="return confirm('Sahkan seluruh berkas dari {{ $s->department->nama_dinas }}?')">
+                                <form action="{{ route('validasi.sahkan', $s->id) }}" method="POST" data-confirm-delete="Sahkan seluruh berkas dari <strong>{{ $s->department->nama_dinas }}</strong> secara final?">
                                     @csrf
                                     <button type="submit" class="btn btn-success btn-sm fw-bold">
                                         <i class="fas fa-check-double me-1"></i> Sahkan

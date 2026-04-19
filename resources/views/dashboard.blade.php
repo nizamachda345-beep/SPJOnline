@@ -77,6 +77,8 @@
         </div>
     </div>
 
+    @include('components.monthly-chart')
+
     <div class="card shadow-sm border-0">
         <div class="card-body p-4">
             <h5 class="fw-semibold">Selamat Datang, <strong>{{ auth()->user()->name }}</strong>!</h5>

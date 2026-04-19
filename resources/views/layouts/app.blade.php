@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
         :root {
@@ -253,7 +255,89 @@
             background: var(--surface-soft);
         }
 
-        /* Sidebar Responsive Styles */
+        /* Skeleton Loading Styles */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 0%, #f9f9f9 50%, #f0f0f0 100%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s ease-in-out infinite;
+            border-radius: 0.5rem;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-table thead th {
+            height: 2.5rem;
+        }
+
+        .skeleton-table tbody tr {
+            height: 2.8rem;
+        }
+
+        .skeleton-text {
+            height: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .skeleton-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+        }
+
+        /* SweetAlert2 Dark Theme */
+        .swal2-popup {
+            background: var(--surface);
+            color: var(--text-dark);
+            box-shadow: 0 10px 40px rgba(15,23,42,.15);
+            border-radius: 1rem;
+        }
+
+        .swal2-title {
+            color: var(--text-dark);
+            font-weight: 700;
+        }
+
+        .swal2-html-container {
+            color: var(--text-muted);
+        }
+
+        .swal2-confirm,
+        .swal2-cancel {
+            padding: 0.6rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            border: none;
+        }
+
+        .swal2-confirm {
+            background: #1d4ed8;
+        }
+
+        .swal2-confirm:hover {
+            background: #1e40af;
+        }
+
+        .swal2-cancel {
+            background: #e5e7eb;
+            color: var(--text-dark);
+        }
+
+        .swal2-cancel:hover {
+            background: #d1d5db;
+        }
+
+        /* Chart.js Dark Theme */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 1rem;
+        }
+
         .sidebar {
             transition: all 0.3s ease-in-out;
             position: fixed;
@@ -594,6 +678,64 @@ document.addEventListener('DOMContentLoaded', function() {
     if (userDropdown) {
         navbar.insertBefore(toggleBtn, userDropdown);
     }
+
+    // SweetAlert2 Delete Confirmation
+    document.querySelectorAll('form[data-confirm-delete]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const message = this.getAttribute('data-confirm-delete') || 'Apakah Anda yakin ingin menghapus data ini?';
+            
+            Swal.fire({
+                title: 'Konfirmasi Penghapusan',
+                html: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal',
+                allowOutsideClick: false,
+                didOpen: (modal) => {
+                    const confirmBtn = modal.querySelector('.swal2-confirm');
+                    confirmBtn.style.backgroundColor = '#dc2626';
+                    confirmBtn.addEventListener('mouseenter', function() {
+                        this.style.backgroundColor = '#b91c1c';
+                    });
+                    confirmBtn.addEventListener('mouseleave', function() {
+                        this.style.backgroundColor = '#dc2626';
+                    });
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+
+    // SweetAlert2 for other confirm buttons
+    document.querySelectorAll('button[data-confirm]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const message = this.getAttribute('data-confirm') || 'Apakah Anda yakin?';
+            
+            e.preventDefault();
+            Swal.fire({
+                title: 'Konfirmasi',
+                html: message,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formId = this.getAttribute('data-form-id');
+                    if (formId) {
+                        document.getElementById(formId).submit();
+                    }
+                }
+            });
+        });
+    });
 });
 </script>
 </body>

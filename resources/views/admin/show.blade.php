@@ -124,7 +124,7 @@
             <div class="card border-0 shadow-sm bg-dark text-white">
                 <div class="card-body p-4 text-center">
                     <h6 class="mb-3">Panel Kontrol Super Admin</h6>
-                    <form action="{{ route('admin.submissions.reset', $submission->id) }}" method="POST" onsubmit="return confirm('Reset status berkas ini ke Pending?')">
+                    <form action="{{ route('admin.submissions.reset', $submission->id) }}" method="POST" data-confirm-delete="Reset status berkas <strong>{{ $submission->nomor_spp_spm }}</strong> ke Pending? Semua proses verifikasi akan direset.">
                         @csrf
                         <button type="submit" class="btn btn-warning w-100 fw-bold shadow-sm mb-3">
                             <i class="fas fa-undo me-1"></i> Reset Status ke Pending

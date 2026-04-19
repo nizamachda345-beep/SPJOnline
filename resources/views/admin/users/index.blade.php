@@ -95,8 +95,8 @@
                                     <i class="fas fa-edit"></i>
                                 </button>
 
-                                {{-- Form Delete yang dibungkus agar icon trash tetap konsisten --}}
-                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Hapus user ini?')" class="d-inline">
+                                {{-- Form Delete que usa SweetAlert2 --}}
+                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline" data-confirm-delete="Hapus user <strong>{{ $user->name }}</strong> secara permanen?">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-link text-danger px-2 py-1" title="Hapus User">
                                         <i class="fas fa-trash-alt"></i>
