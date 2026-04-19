@@ -16,8 +16,16 @@
 
     <div class="row mb-4 align-items-center">
         <div class="col-md-8">
-            <h4 class="fw-bold text-dark mb-1"><i class="fas fa-chart-line me-2"></i>Dashboard Audit - BPK</h4>
-            <p class="text-muted small mb-0">Pemantauan real-time jejak digital berkas SPP/SPM Pemkab Bolmong.</p>
+            <div class="d-flex align-items-center mb-2">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d2/BPK_insignia.svg" 
+                     alt="Logo BPK" 
+                     class="me-3" 
+                     style="width: 60px; height: 60px; object-fit: contain;">
+                <div>
+                    <h4 class="fw-bold text-dark mb-1"><i class="fas fa-chart-line me-2"></i>Dashboard Audit - BPK</h4>
+                    <p class="text-muted small mb-0">Pemantauan real-time jejak digital berkas SPP/SPM Pemkab Bolmong.</p>
+                </div>
+            </div>
         </div>
         <div class="col-md-4 text-md-end mt-3 mt-md-0">
             <a href="{{ route('bpk.monitoring') }}" class="btn btn-soft btn-primary btn-pill shadow-sm px-4">
