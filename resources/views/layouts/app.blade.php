@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
@@ -461,6 +462,7 @@
         .main-content {
             margin-left: 16.5rem;
             transition: margin-left 0.3s ease-in-out;
+            background: transparent;
         }
 
         .sidebar.collapsed + .main-content {
@@ -479,7 +481,8 @@
     </style>
 </head>
 <body>
-
+<div id="vanta-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
+            
 <nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm py-2">
     <div class="container-fluid px-4">
         <a class="navbar-brand fw-semibold" href="#">
@@ -733,7 +736,6 @@
                     </div>
                 @endif
             </div>
-
             <div id="content-wrapper">
                 @yield('content')
             </div>
@@ -741,7 +743,6 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 {{-- Sidebar Toggle Script --}}
 <script>
@@ -824,23 +825,33 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
 <script>
-VANTA.WAVES({
-  el: "body",
-  mouseControls: true,
-  touchControls: true,
-  gyroControls: false,
-  minHeight: 200.00,
-  minWidth: 200.00,
-  scale: 1.00,
-  scaleMobile: 1.00,
-  color: 0x909090,
-  shininess: 5.00,
-  waveHeight: 6.00,
-  waveSpeed: 0.85,
-  zoom: 0.88
-})
+    function initVanta() {
+        if (typeof VANTA !== 'undefined' && typeof THREE !== 'undefined') {
+            VANTA.WAVES({
+                el: "#vanta-bg",
+                mouseControls: true,
+                touchControls: true,
+                gyroControls: false,
+                minHeight: 200.00,
+                minWidth: 200.00,
+                scale: 1.00,
+                scaleMobile: 1.00,
+                color: 0x4e73df, // Ubah warna ke biru iDJ agar terlihat (jangan putih)
+                shininess: 30.00,
+                waveHeight: 15.00,
+                waveSpeed: 0.80,
+                zoom: 1.00
+            });
+        } else {
+            // Jika gagal, tunggu 100ms lalu coba lagi
+            setTimeout(initVanta, 100);
+        }
+    }
+
+    // Jalankan setelah seluruh window (termasuk script luar) selesai dimuat
+    window.addEventListener('load', initVanta);
 </script>
+
 </body>
 </html>
