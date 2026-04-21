@@ -1,4 +1,4 @@
-<style>
+
         :root {
             color-scheme: light;
             --body-bg: transparent;
@@ -300,50 +300,46 @@
             font-weight: 700;
             padding: 0.5rem 0.8rem;
             border-radius: 5px;
+            background-color: #ffffff !important;
             border: 1px solid transparent;
         }
 
         .badge.bg-primary {
-            background-color: rgba(78, 115, 223, 0.1);
-            color: #4e73df;
-            border-color: rgba(78, 115, 223, 0.2);
+            color: var(--primary) !important;
+            border-color: var(--primary);
         }
 
         .badge.bg-success {
-            background-color: rgba(81, 201, 68, 0.1);
-            color: #51c944;
-            border-color: rgba(81, 201, 68, 0.2);
+            color: var(--success) !important;
+            border-color: var(--success);
         }
 
         .badge.bg-danger {
-            background-color: rgba(255, 62, 29, 0.1);
-            color: #ff3e1d;
-            border-color: rgba(255, 62, 29, 0.2);
+            color: var(--danger) !important;
+            border-color: var(--danger);
         }
 
         .badge.bg-warning {
-            background-color: rgba(255, 184, 0, 0.1);
-            color: #ffb800;
-            border-color: rgba(255, 184, 0, 0.2);
+            color: var(--warning) !important;
+            border-color: var(--warning);
         }
 
         .badge.bg-info {
-            background-color: rgba(3, 195, 236, 0.1);
-            color: #03c3ec;
-            border-color: rgba(3, 195, 236, 0.2);
+            color: var(--info) !important;
+            border-color: var(--info);
         }
 
         .badge.bg-secondary {
-            background-color: rgba(108, 117, 125, 0.1);
-            color: #6c757d;
-            border-color: rgba(108, 117, 125, 0.2);
+            color: var(--dark) !important;
+            border-color: var(--dark);
         }
 
         .badge.bg-light {
-            background-color: rgba(248, 249, 250, 0.8);
-            color: #1f2937;
+            background-color: rgba(248, 249, 250, 0.8) !important;
+            color: var(--text-dark) !important;
             border-color: rgba(33, 37, 41, 0.1);
         }
+
 
         .alert,
         .modal-content {
@@ -507,4 +503,3 @@
                 margin-left: 0 !important;
             }
         }
-    </style>
