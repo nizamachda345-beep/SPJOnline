@@ -1,0 +1,562 @@
+================================================================================
+                    AUDIT KODE - FUNGSI & KODE YANG TIDAK DIGUNAKAN
+                             (Tanggal: 26 April 2026)
+================================================================================
+
+📋 HASIL AUDIT MENYELURUH:
+Saya telah memeriksa semua ROUTES, CONTROLLERS, MODELS, dan VIEWS.
+Berikut adalah daftar kode/fungsi yang TIDAK DIGUNAKAN dan bisa dihapus/diperbaiki:
+
+================================================================================
+1️⃣  CONTROLLER METHODS YANG TIDAK DIGUNAKAN
+================================================================================
+
+🔴 SubmissionController.php:
+   
+   a) allSubmissions() [Lines ~93-140]
+      - Fungsi ini TIDAK ADA ROUTE yang menggunakannya
+      - Logika mirip dengan BpkController::index()
+      - REKOMENDASI: Hapus, atau jika ingin digunakan, tambahkan route untuk ini
+      
+   b) verifier() [Lines ~202-204]
+      - Method ini mendefinisikan relasi ke model User tapi tidak ada yang panggil
+      - Seharusnya ada di Model Submission, bukan di Controller
+      - REKOMENDASI: Hapus dari controller (sudah ada di Submission model)
+      
+   c) updateStatus() [Lines ~206-220]
+      - Method ini TIDAK ADA ROUTE yang menggunakannya
+      - Logika untuk update status ada di method lain (documentAction, sendToKabid, dll)
+      - REKOMENDASI: Hapus jika redundan atau tambahkan route jika dibutuhkan
+
+📌 SUMMARY:
+   - Total unused methods: 3 buah
+   - Rekomendasi: Review & hapus atau implementasikan routes-nya
+
+================================================================================
+2️⃣  MODELS YANG TIDAK DIGUNAKAN SEPENUHNYA
+================================================================================
+
+🔴 SuperSubmission.php [app/Models/]
+   - Model ini TIDAK ADA YANG MENGGUNAKAN
+   - Hanya inherit dari Submission tanpa method tambahan
+   - Tidak ada di route, controller, atau views
+   - REKOMENDASI: HAPUS file ini (redundan)
+
+🟡 SubmissionLog.php [app/Models/]
+   - Model dibuat dengan relasi yang baik ke Submission & User
+   - TAPI tidak ada implementasi untuk membuat log di controller
+   - Method updateStatus() di SubmissionController seharusnya create log, tapi tidak
+   - REKOMENDASI: 
+     * Jika ingin track audit, gunakan SubmissionLog di setiap update status
+     * Atau hapus model ini jika tidak diperlukan
+
+================================================================================
+3️⃣  SERVICES YANG TIDAK DIGUNAKAN
+================================================================================
+
+🔴 SubmissionService.php [app/Services/]
+   - Service dibuat dengan method storeSubmission() tapi TIDAK PERNAH DIGUNAKAN
+   - Logic untuk store submission sudah langsung di SubmissionController::store()
+   - REKOMENDASI: 
+     * Jika ingin refactor ke service, ganti SubmissionController::store() pakai service
+     * Atau hapus file ini (tidak berguna saat ini)
+
+================================================================================
+4️⃣  VIEWS YANG TIDAK DIGUNAKAN
+================================================================================
+
+🔴 welcome.blade.php [resources/views/]
+   - View ini TIDAK PERNAH DIAKSES
+   - Route '/' langsung redirect ke '/login'
+   - REKOMENDASI: HAPUS file ini
+
+================================================================================
+5️⃣  ROUTING ISSUES / INCONSISTENCIES
+================================================================================
+
+🟡 web.php - Ada beberapa masalah routing yang perlu diperbaiki:
+
+   a) Double prefix '/admin' di beberapa route:
+      - Route '/admin/admin/dashboard' seharusnya '/admin/dashboard'
+      - Route '/admin/monitoring' tapi ada juga '/monitoring' dengan berbeda Controller
+      - REKOMENDASI: Standardize routing structure
+
+   b) Duplikasi route pattern:
+      - Ada '/admin/department' dan '/department' (kurang konsisten)
+      - Ada '/submissions/{id}' dan '/submission/{id}/edit-revisi' (inconsistent naming)
+      - REKOMENDASI: Gunakan prefix atau standardize endpoint naming
+
+   c) Missing/inconsistent admin routes:
+      - AdminController di-import di routes tapi TIDAK ADA di controllers folder
+      - REKOMENDASI: Pastikan AdminController ada atau hapus import-nya
+
+================================================================================
+6️⃣  POTENTIAL IMPROVEMENTS & RECOMMENDATIONS
+================================================================================
+
+✅ CLEAN UP STEPS (Prioritas):
+
+   TINGGI:
+   1. ❌ Hapus: app/Models/SuperSubmission.php (file tidak berguna)
+   2. ❌ Hapus: resources/views/welcome.blade.php (tidak digunakan)
+   3. ✏️  Hapus method: SubmissionController::allSubmissions() (line 93-140)
+   4. ✏️  Hapus method: SubmissionController::verifier() (line 202-204)
+   5. ✏️  Hapus method: SubmissionController::updateStatus() (line 206-220)
+   
+   SEDANG:
+   6. ❌ Hapus atau Implementasikan: app/Services/SubmissionService.php
+   7. ✏️  Refactor: Standardize routing di web.php (fix double prefix & inconsistencies)
+   8. 🔧 Review: SubmissionLog model - integrasikan audit logging atau hapus
+
+   RENDAH:
+   9. 📝 Code review: Pastikan tidak ada dead code lainnya di views
+
+================================================================================
+7️⃣  AUDIT CHECKLIST - YANG SUDAH DIVERIFIKASI DIGUNAKAN
+================================================================================
+
+✅ CONTROLLERS (SEMUA DIGUNAKAN):
+   ✓ AuthController - showLogin, login, logout
+   ✓ DashboardController - index, chartData
+   ✓ SubmissionController - create, store, index, show, editRevisi, update, resetStatus
+   ✓ VerifikasiController - index, show, documentAction, sendToKabid, tolak
+   ✓ ValidasiController - index, show, sahkan, tolak
+   ✓ HistoryController - index, exportExcel, printPDF, show
+   ✓ BpkController - index, show, dashboard
+   ✓ SuperAdminController - dashboard, index, show, resetStatus
+   ✓ Admin/DepartmentController - index, store, update, destroy
+   ✓ Admin/UserController - index, store, destroy, update
+
+✅ MODELS (SEMUA DIGUNAKAN - KECUALI YANG DISEBUT DIATAS):
+   ✓ User - Used in Auth, relationships
+   ✓ Submission - Core model, extensively used
+   ✓ Document - Used for file management
+   ✓ Department - Used for organizing users & submissions
+   ✗ SubmissionLog - Created but not implemented
+   ✗ SuperSubmission - Not used
+
+✅ VIEWS (SEMUA DIGUNAKAN - KECUALI WELCOME):
+   ✓ dashboard.blade.php, auth/login.blade.php
+   ✓ submissions/* (create, edit, index, show)
+   ✓ admin/* (dashboard, monitoring, users, department)
+   ✓ history/* (index, show)
+   ✓ bpk/* (dashboard, monitoring, show)
+   ✓ verifikasi/* (index, show)
+   ✓ validasi/* (index, show)
+   ✓ exports/history_pdf.blade.php
+   ✗ welcome.blade.php - Not used (route redirects to login)
+
+================================================================================
+🔍 AUDIT DETAIL VIEWS - CODE/VARIABEL YANG TIDAK DIGUNAKAN/TIDAK BERFUNGSI
+================================================================================
+
+Saya sudah memeriksa SEMUA view files dan menemukan BEBERAPA MASALAH:
+
+🔴 MASALAH KRITIS (Variable Undefined / Mismatch):
+
+1️⃣  dashboard.blade.php (Lines 50-55):
+   MASALAH: 
+   ```
+   ['label' => 'Disahkan', 'value' => $stats['selesai'] ?? 0, ...] (for Kabid)
+   ```
+   - Variable '$stats[selesai]' TIDAK PERNAH DIDEFINISIKAN di DashboardController
+   - Controller hanya define: $stats['disetujui'] dan $stats['verified']
+   - Akibat: Card akan selalu menampilkan 0, DEAD CODE
+   - REKOMENDASI: Ganti dengan $stats['disetujui'] atau hapus card ini
+
+2️⃣  submissions/index.blade.php (Lines 75-80):
+   MASALAH:
+   ```
+   @if($approvedCount == 6 && is_null($s->sent_to_kabid_at))
+   ```
+   - Column '$s->sent_to_kabid_at' TIDAK ADA DI TABEL SUBMISSIONS
+   - Condition ini TIDAK AKAN PERNAH TRUE
+   - Logic ini dimaksudkan untuk check "sudah semua diverifikasi?", tapi cara yang salah
+   - REKOMENDASI: Pakai method yang ada: $s->isAllVerified atau hapus condition ini
+
+3️⃣  submissions/show.blade.php (Lines 32-46):
+   MASALAH: Reference ke STATUS yang TIDAK ADA:
+   - Status 'ditolak' ❌ (tidak ada di database, seharusnya 'rejected')
+   - Status 'proses verifikasi' ❌ (tidak ada, seharusnya 'pending')
+   - Akibat: Badge untuk status ini tidak akan pernah muncul
+   - REKOMENDASI: Perbaiki nama status atau hapus case yang tidak ada
+
+4️⃣  admin/show.blade.php (Line 29):
+   MASALAH:
+   ```
+   <div class="col-sm-8 text-dark">{{ $submission->keterangan ?? '-' }}</div>
+   ```
+   - Column '$submission->keterangan' TIDAK ADA DI MODEL SUBMISSION
+   - Akan selalu menampilkan '-' (fallback value)
+   - REKOMENDASI: Hapus atau ganti dengan field yang valid
+
+5️⃣  verifikasi/show.blade.php (Line 110):
+   MASALAH: Incomplete Form action (PARTIAL ERROR):
+   ```
+   <td class="pe-4 text-end">
+       <div class="btn-group btn-group-sm action-group">
+           <button ... data-docid="{{ $doc->id }}" ✓ BAIK
+   ```
+   Tapi di JavaScript tidak ada handler yang create action URL dengan proper endpoint
+   Modal form action tidak di-set di JavaScript AJAX handler
+   - REKOMENDASI: Lengkapi JavaScript handler untuk set form action
+
+🟡 DEAD CODE / LOGIC YANG TIDAK BERFUNGSI:
+
+6️⃣  submissions/index.blade.php (COMMENTED LINES 45-56):
+   ```php
+   <!-- <td class="text-center">
+       @if($s->status == 'pending')
+           <span class="badge bg-warning"><i class="fas fa-spinner fa-spin me-1"></i>Menunggu Verifikasi</span>
+       ...
+   </td> -->
+   ```
+   - Code ini di-COMMENT (tidak aktif)
+   - Ada duplikasi logic di lines 58-71 yang aktif
+   - REKOMENDASI: Hapus commented code (cleanup)
+
+7️⃣  submissions/index.blade.php (Line 78):
+   ISSUE: Incomplete/Inconsistent Status Logic:
+   ```
+   @if($s->status == 'pending')
+       @php $approvedCount = $s->documents->where('status_dokumen', 'approved')->count(); @endphp
+   ```
+   - Cari 'approved' tapi di document model konstanta define 'verified' bukan 'approved'
+   - Akan selalu return 0 karena tidak ada document dengan status 'approved'
+   - REKOMENDASI: Ganti 'approved' → 'verified'
+
+8️⃣  admin/show.blade.php (Lines 47-48):
+   MASALAH: Reference ke column yang mungkin tidak ada:
+   ```
+   <div class="row mb-3">
+       <div class="col-sm-4 text-muted small uppercase">Keterangan</div>
+       <div class="col-sm-8 text-dark">{{ $submission->keterangan ?? '-' }}</div>
+   </div>
+   ```
+   - Model Submission tidak memiliki column 'keterangan'
+   - REKOMENDASI: Hapus atau ganti dengan field valid (perihal, catatan, dsb)
+
+================================================================================
+🟠 POTENTIAL ISSUES (Tidak Critical tapi Perlu Review):
+
+9️⃣  verifikasi/show.blade.php (Lines ~160-200):
+   ISSUE: Incomplete Modal Handler
+   - Modal #modalTolak ada di form
+   - Tapi JavaScript AJAX handler tidak lengkap (file terpotong saat read)
+   - Form action tidak dinamis di-set dari button data attributes
+   - REKOMENDASI: Review & lengkapi JavaScript handler
+
+🔟  admin/show.blade.php (Lines ~180-200):
+   ISSUE: Preview modal dengan loading state & error handling
+   - Kode ada tapi JavaScript tidak lengkap (file terpotong)
+   - Function retryLoading(), cancelLoading() tidak dilihat penuh
+   - REKOMENDASI: Review & pastikan semua function didefinisikan
+
+1️⃣1️⃣  Layout Issue di verifikasi/show.blade.php (Line 80):
+   ```
+   <tr class="text-muted"text-transform: uppercase; letter-spacing: 1.2px;">
+   ```
+   - Syntax error: Missing space antara attribute name & inline style
+   - Harusnya: <tr class="text-muted" style="text-transform: uppercase; ...">
+   - REKOMENDASI: Fix syntax error
+
+================================================================================
+📋 RINGKASAN: YANG PERLU DIPERBAIKI UNTUK PRODUCTION
+================================================================================
+
+CRITICAL (MUST FIX):
+   1. ❌ dashboard.blade.php - Ganti $stats['selesai'] → $stats['disetujui']
+   2. ❌ submissions/index.blade.php - Hapus is_null($s->sent_to_kabid_at) check
+   3. ❌ submissions/index.blade.php - Ganti 'approved' → 'verified'
+   4. ❌ submissions/show.blade.php - Fix status names ('ditolak' → 'rejected', etc)
+   5. ❌ admin/show.blade.php - Hapus $submission->keterangan (column tidak ada)
+
+HIGH (SHOULD FIX):
+   6. ⚠️  verifikasi/show.blade.php - Lengkapi JavaScript AJAX handler
+   7. ⚠️  admin/show.blade.php - Lengkapi JavaScript preview handler
+   8. ⚠️  verifikasi/show.blade.php - Fix syntax error di table header
+
+LOW (NICE TO HAVE):
+   9. 📝 submissions/index.blade.php - Hapus commented code (lines 45-56)
+  10. 📝 Review semua hardcoded status strings vs database actual values
+
+================================================================================
+📊 BEFORE & AFTER EXAMPLES:
+================================================================================
+
+EXAMPLE 1 - dashboard.blade.php:
+BEFORE (WRONG):
+   ['label' => 'Disahkan', 'value' => $stats['selesai'] ?? 0, ...]
+   
+AFTER (CORRECT):
+   ['label' => 'Disahkan', 'value' => $stats['disetujui'] ?? 0, ...]
+
+---
+
+EXAMPLE 2 - submissions/index.blade.php:
+BEFORE (WRONG):
+   @if($approvedCount == 6 && is_null($s->sent_to_kabid_at))
+   
+AFTER (CORRECT):
+   @if($approvedCount == 6)
+   
+or
+   
+   @if($submission->documents->where('status_dokumen', 'verified')->count() == 6)
+
+---
+
+EXAMPLE 3 - submissions/index.blade.php:
+BEFORE (WRONG):
+   $approvedCount = $s->documents->where('status_dokumen', 'approved')->count();
+   
+AFTER (CORRECT):
+   $approvedCount = $s->documents->where('status_dokumen', 'verified')->count();
+
+---
+
+EXAMPLE 4 - submissions/show.blade.php:
+BEFORE (WRONG):
+   @elseif($submission->status == 'ditolak')
+       <span class="badge bg-danger">Ditolak / Perlu Perbaikan</span>
+   @elseif($submission->status == 'proses verifikasi')
+       <span class="badge bg-info text-dark">Proses Verifikasi</span>
+       
+AFTER (CORRECT):
+   @elseif($submission->status == 'rejected')
+       <span class="badge bg-danger">Ditolak / Perlu Perbaikan</span>
+   @elseif($submission->status == 'pending')
+       <span class="badge bg-warning">Menunggu Verifikasi</span>
+
+---
+
+EXAMPLE 5 - admin/show.blade.php:
+BEFORE (WRONG):
+   <div class="row mb-3">
+       <div class="col-sm-4 text-muted small uppercase">Keterangan</div>
+       <div class="col-sm-8 text-dark">{{ $submission->keterangan ?? '-' }}</div>
+   </div>
+   
+AFTER (CORRECT - Hapus Section):
+   (Remove this row entirely - keterangan tidak ada di model)
+
+================================================================================
+✅ FINAL CHECKLIST - SEBELUM PRODUCTION:
+================================================================================
+
+TESTING STEPS:
+   ☐ Test dashboard dengan role Operator - lihat apakah card muncul correct
+   ☐ Test dashboard dengan role Kabid - lihat apakah 'Disahkan' card tidak error
+   ☐ Test submissions index - verifikasi status badge & modal revisi berfungsi
+   ☐ Test verifikasi show - verifikasi button setuju/tolak berfungsi
+   ☐ Test admin show - verifikasi preview modal & reset button berfungsi
+   ☐ Check browser console untuk JS errors
+
+CODE REVIEW:
+   ☐ Verifikasi semua status strings sesuai database
+   ☐ Verifikasi semua column names sesuai model
+   ☐ Verifikasi semua variable dari controller ke view sesuai
+   ☐ Hapus commented code (cleanup)
+   ☐ Fix syntax errors di HTML/Blade
+
+================================================================================
+
+📁 CSS FILES:
+
+🟢 resources/css/app.css
+   - File Tailwind CSS yang mengimport @import 'tailwindcss'
+   - Digunakan di vite.config.js: ✓ YES
+   - Status: AKTIF & DIGUNAKAN
+
+🟢 resources/css/idj.css
+   - Custom CSS untuk styling aplikasi iDJ
+   - Digunakan di vite.config.js: ✓ YES
+   - Berisi:
+     * Color scheme variables (primary, danger, success, warning, info)
+     * Sidebar styling
+     * Card & button styling
+     * Badge & alert styling
+     * Progress bar animations
+     * Custom utilities (btn-reset-custom, btn-action-idj, etc)
+   - Status: AKTIF & DIGUNAKAN
+
+🔴 resources/css/idj backup.css
+   - File BACKUP (ditandai dengan nama 'backup')
+   - TIDAK ada di vite.config.js
+   - TIDAK digunakan di production
+   - Isi: Duplikasi dari idj.css (sama persis)
+   - REKOMENDASI: HAPUS file ini (hanya backup, tidak perlu di repo)
+
+📁 JAVASCRIPT FILES:
+
+🟡 resources/js/app.js
+   - File hampir KOSONG (hanya komentar: //)
+   - Diimport di vite.config.js: ✓ YES
+   - Tidak ada logic JavaScript apapun
+   - Komponen JS menggunakan inline script (di blade components)
+   - REKOMENDASI: 
+     * Jika tidak ada JS global yang perlu dimuat, bisa dihapus
+     * Atau keep untuk future use jika nanti perlu vendor JS library import
+
+📁 VIEW COMPONENTS:
+
+✅ resources/views/components/monthly-chart.blade.php
+   - Component Chart.js untuk visualisasi pencairan bulanan
+   - Digunakan di: dashboard.blade.php
+   - Status: AKTIF & DIGUNAKAN
+   - Fitur: Filter tahun, filter SKPD, currency formatting
+
+✅ resources/views/components/table-skeleton.blade.php
+   - Component skeleton loading untuk table
+   - Parameter: $rows (default 5), $cols (default 4)
+   - DICARI PENGGUNAAN: 
+     * Search hasil: HANYA disebutkan di UI_UX_ENHANCEMENTS.md (documentation)
+     * Tidak ada @include di production views
+   - Status: BUILT tapi TIDAK DIGUNAKAN DI PRODUCTION
+   - REKOMENDASI: HAPUS (jika tidak direncanakan untuk fitur skeleton loading)
+
+✅ resources/views/components/_stats_data.blade.php
+   - Component menampilkan statistik dashboard (Total, Pending, Revisi, Ditolak, Disahkan)
+   - Digunakan di: dashboard.blade.php & bpk/dashboard.blade.php
+   - Status: AKTIF & DIGUNAKAN
+
+📌 VITE CONFIG CHECK:
+
+vite.config.js:
+   - Input yang di-build:
+     ✓ resources/css/app.css (Tailwind)
+     ✓ resources/js/app.js (Empty but imported)
+     ✓ resources/css/idj.css (Custom styling)
+   - Tailwind plugin: ✓ Aktif
+   - Status: BAIK
+
+================================================================================
+8️⃣  CSS & JAVASCRIPT AUDIT - DEFINED vs USED
+================================================================================
+
+📋 CSS CLASS INVENTORY:
+
+✅ USED CLASSES (Didefinisikan & Dipakai):
+   ✓ .border-start-gold, .border-start-navy (admin/monitoring, bpk/dashboard)
+   ✓ .bg-accent-primary, .bg-accent-warning, .bg-accent-success (dashboard, components)
+   ✓ .bg-warning-soft, .bg-danger-soft (admin/show, submissions/index)
+   ✓ .extra-small (submissions/index, history/index, bpk/show, auth/login)
+   ✓ .icon-box (dashboard, history/show)
+   ✓ .btn-xs (submissions/index)
+   ✓ .progress, .progress-bar (verifikasi/show)
+   ✓ #modalPreviewPDF (submissions/index, verifikasi/show)
+   ✓ .card, .badge, .alert, .table (Bootstrap + custom)
+
+❌ UNUSED CLASSES (Didefinisikan tapi TIDAK Dipakai):
+   ✗ .btn-reset-custom - TIDAK DIGUNAKAN (7 lines)
+   ✗ .btn-action-idj - TIDAK DIGUNAKAN (7 lines)
+   ✗ .btn-light-primary, .btn-light-danger - TIDAK DIGUNAKAN (6+8 lines)
+   ✗ .badge-idj & variants - TIDAK DIGUNAKAN (6 lines)
+   ✗ .bg-reset, .border-reset - TIDAK DIGUNAKAN (5 lines)
+   ✗ .sidebar.collapsed variants - TIDAK DIGUNAKAN (15+ lines)
+   ✗ .swal2-* styles - TIDAK DIGUNAKAN (40+ lines) - CSS ada tapi hanya DOM select
+   ✗ .skeleton*, .skeleton-table, .skeleton-avatar - TIDAK DIGUNAKAN (30+ lines)
+   ✗ .offcanvas - TIDAK DIGUNAKAN (2 lines)
+   ✗ .progress-bar-animated - TIDAK DIGUNAKAN (1 line)
+
+⚠️  CSS ISSUES:
+
+1. DUPLIKASI DEFINISI:
+   - .bg-danger-soft DEFINED 3 KALI (line 636, 644, 654) ← CONFLICT!
+   - .extra-small DEFINED 2 KALI (line 634: 0.75rem, line 658: 0.7rem) ← CONFLICT!
+   - .icon-box DEFINED 2 TEMPAT (idj.css + dashboard.blade.php inline)
+   - .sidebar DEFINED 2 BLOK terpisah (line ~80 & ~450)
+
+2. UNUSED CSS VARIABLES:
+   - --primary-soft, --success-soft, --warning-soft, --danger-soft, --info-soft
+   (Defined di :root tapi tidak digunakan di CSS class manapun)
+
+3. CLASS DEFINITION TIDAK CENTRALIZED:
+   - .badge-status: DIGUNAKAN di verifikasi/show tapi DEFINED inline (bukan di idj.css)
+
+📊 ESTIMASI CLEANUP:
+   Total Unused CSS: ~130 lines ≈ 1.5-2 KB (~13% dari file size)
+   Duplikasi: ~20 lines
+   SAVING: ~150 lines total
+
+================================================================================
+9️⃣  SUMMARY AUDIT KESELURUHAN
+================================================================================
+
+📊 TOTAL FILES YANG DIAUDIT:
+
+Controllers:      10 files
+  - Unused Methods: 3
+  - Unused Controllers: 0
+
+Models:           6 files
+  - Unused Models: 1 (SuperSubmission.php)
+  - Partially Used: 1 (SubmissionLog.php)
+
+Services:         1 file
+  - Unused Services: 1 (SubmissionService.php)
+
+Views:           ~30+ files
+  - Unused Views: 1 (welcome.blade.php)
+  - Unused Components: 1 (table-skeleton.blade.php - verified unused)
+
+CSS:             3 files
+  - Active CSS: 2 (app.css, idj.css)
+  - Unused CSS: 1 (idj backup.css)
+  - Unused CSS Classes: 10 categories (~130 lines, ~2KB bloat)
+  - Duplikasi CSS Class: 4 (bg-danger-soft, extra-small, icon-box, sidebar)
+
+JS:              1 file
+  - Active JS: 0 (app.js kosong)
+  - Empty but Present: 1
+
+================================================================================
+📌 NEXT STEPS:
+================================================================================
+
+1. Review items di "CLEAN UP STEPS" section di atas
+2. Hanya hapus jika YAKIN tidak akan digunakan
+3. Jika ada uncertainty, backup terlebih dahulu atau ganti dengan comment
+4. Test setiap perubahan untuk memastikan tidak ada error
+5. Update routes jika ada routing issues
+
+✂️  QUICK DELETE CHECKLIST (SAFE TO DELETE):
+   ☐ resources/css/idj backup.css
+   ☐ resources/views/welcome.blade.php
+   ☐ resources/views/components/table-skeleton.blade.php (verified unused)
+   ☐ app/Models/SuperSubmission.php
+
+CSS CLASSES TO REMOVE (FROM idj.css):
+   ☐ .btn-reset-custom (7 lines)
+   ☐ .btn-action-idj (7 lines)
+   ☐ .btn-light-primary, .btn-light-danger (6+8 lines)
+   ☐ .badge-idj variants (6 lines)
+   ☐ .bg-reset, .border-reset (5 lines)
+   ☐ .sidebar.collapsed variants (15+ lines)
+   ☐ .swal2-* styles (40+ lines) - if not using SweetAlert2
+   ☐ .skeleton* variants (30+ lines) - if not using skeleton loading
+   ☐ .offcanvas (2 lines)
+   ☐ .progress-bar-animated (1 line)
+
+CSS VARIABLES TO REMOVE (unused):
+   ☐ --primary-soft, --success-soft, --warning-soft, --danger-soft, --info-soft
+   
+✏️  SHOULD REFACTOR:
+   ☐ SubmissionController::allSubmissions() - hapus atau add route
+   ☐ SubmissionController::verifier() - pindah ke model atau hapus
+   ☐ SubmissionController::updateStatus() - hapus atau implement
+   ☐ SubmissionService.php - refactor atau hapus
+   
+📝 OPTIONAL IMPROVEMENTS:
+   ☐ Check apakah table-skeleton.blade.php benar-benar digunakan
+   ☐ Consolidate CSS styling (app.css & idj.css bisa dimulai jika besar)
+   ☐ Implementasikan SubmissionLog untuk audit trail yang proper
+   
+CSS OPTIMIZATION:
+   ☐ Remove ~130 lines unused CSS classes (save ~2KB)
+   ☐ Consolidate 4 duplikasi CSS definitions
+   ☐ Centralize .badge-status ke idj.css
+   ☐ Remove 5 unused CSS variables from :root
+   ☐ Total potential saving: ~150 lines CSS file
+
+================================================================================

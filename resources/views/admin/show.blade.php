@@ -21,7 +21,7 @@
     <div class="row mb-4">
         <div class="col-md-12 d-flex justify-content-between align-items-center">
             <div>
-                <a href="{{ route('admin.monitoring') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm">
+                <a href="{{ route('admin.monitoring') }}" class="btn btn-secondary btn-sm rounded-pill px-3 shadow-sm">
                     <i class="fas fa-arrow-left me-1"></i> Kembali
                 </a>
             </div>
@@ -61,33 +61,100 @@
                 </div>
             </div>
 
-            {{-- Log Perjalanan Berkas --}}
+           {{-- Log Perjalanan Berkas Lengkap --}}
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <h5 class="m-0 fw-bold text-secondary"><i class="fas fa-history me-2"></i>Riwayat Berkas</h5>
+                    <h5 class="m-0 fw-bold text-secondary"><i class="fas fa-history me-2"></i>Riwayat Perjalanan Berkas</h5>
                 </div>
                 <div class="card-body">
                     <div class="timeline-small">
-                        <div class="d-flex mb-3">
+                        
+                        {{-- 1. Tahap Input (Operator) --}}
+                        <div class="d-flex mb-3 position-relative">
                             <div class="me-3 text-center" style="width: 50px;">
                                 <i class="fas fa-paper-plane text-primary"></i>
+                                <div class="vr mt-2 mb-2" style="height: 20px; opacity: 0.2;"></div>
                             </div>
                             <div>
-                                <div class="fw-bold small">Input Berkas (Operator)</div>
-                                <div class="text-muted extra-small">{{ $submission->user->name }} • {{ $submission->created_at->format('d M Y, H:i') }}</div>
+                                <div class="fw-bold small">Berkas Diajukan</div>
+                                <div class="text-muted extra-small">
+                                    Oleh: {{ $submission->user->name }} <br>
+                                    <i class="far fa-clock me-1"></i> {{ $submission->created_at->format('d M Y, H:i') }}
+                                </div>
                             </div>
                         </div>
+
+                        {{-- 2. Tahap Verifikasi (Kasie BUD) --}}
                         @if($submission->verified_at)
-                        <div class="d-flex mb-3">
+                        <div class="d-flex mb-3 position-relative">
                             <div class="me-3 text-center" style="width: 50px;">
-                                <i class="fas fa-check-circle text-info"></i>
+                                <i class="fas fa-check-double text-info"></i>
+                                <div class="vr mt-2 mb-2" style="height: 20px; opacity: 0.2;"></div>
                             </div>
                             <div>
-                                <div class="fw-bold small">Terverifikasi (Kasie)</div>
-                                <div class="text-muted extra-small">{{ $submission->verified_by_name ?? 'System' }} • {{ \Carbon\Carbon::parse($submission->verified_at)->format('d M Y, H:i') }}</div>
+                                <div class="fw-bold small text-info">Terverifikasi (Kasie BUD)</div>
+                                <div class="text-muted extra-small">
+                                    Verifikator: {{ $submission->verified_by_name ?? 'Sistem' }} <br>
+                                    <i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($submission->verified_at)->format('d M Y, H:i') }}
+                                </div>
                             </div>
                         </div>
                         @endif
+
+                        {{-- 3. Tahap Validasi Akhir (Kabid Perbendaharaan) --}}
+                        @if($submission->validated_at)
+                        <div class="d-flex mb-3 position-relative">
+                            <div class="me-3 text-center" style="width: 50px;">
+                                <i class="fas fa-file-signature text-success"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold small text-success">Disahkan (Kabid Perbendaharaan)</div>
+                                <div class="text-muted extra-small">
+                                    Validator: {{ $submission->validated_by_name ?? 'Sistem' }} <br>
+                                    <i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($submission->validated_at)->format('d M Y, H:i') }}
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        {{-- 4. Kondisi Khusus: REVISI / DITOLAK --}}
+                        @if($submission->status == 'revisi' || $submission->status == 'rejected')
+                        <div class="d-flex mb-3">
+                            <div class="me-3 text-center" style="width: 50px;">
+                                <i class="fas fa-exclamation-circle {{ $submission->status == 'revisi' ? 'text-warning' : 'text-danger' }}"></i>
+                            </div>
+                            <div class="p-2 rounded {{ $submission->status == 'revisi' ? 'bg-warning-soft' : 'bg-danger-soft' }} border w-100">
+                                <div class="fw-bold small {{ $submission->status == 'revisi' ? 'text-warning' : 'text-danger' }}">
+                                    {{ $submission->status == 'revisi' ? 'Perlu Revisi' : 'Pengajuan Ditolak' }}
+                                </div>
+                                @if($submission->catatan || $submission->catatan_kabid)
+                                    <div class="text-dark extra-small mt-1 italic">
+                                        "{{ $submission->catatan ?? $submission->catatan_kabid }}"
+                                    </div>
+                                @endif
+                                <div class="text-muted extra-small mt-1">
+                                    <i class="far fa-clock me-1"></i> {{ $submission->updated_at->format('d M Y, H:i') }}
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
+                        {{-- 5. Kondisi Khusus: RESET (Oleh Admin) --}}
+                        @if($submission->status == 'reset')
+                        <div class="d-flex mb-3">
+                            <div class="me-3 text-center" style="width: 50px;">
+                                <i class="fas fa-undo-alt text-secondary"></i>
+                            </div>
+                            <div class="p-2 rounded bg-light border w-100">
+                                <div class="fw-bold small text-secondary">Status Direset oleh Admin</div>
+                                <div class="text-muted extra-small">Berkas dikembalikan ke antrean awal.</div>
+                                <div class="text-muted extra-small mt-1">
+                                    <i class="far fa-clock me-1"></i> {{ $submission->updated_at->format('d M Y, H:i') }}
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
                     </div>
                 </div>
             </div>

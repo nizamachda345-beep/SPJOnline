@@ -23,42 +23,58 @@ class SubmissionController extends Controller
         return view('submissions.create', compact('userDepartment'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'nomor_spp_spm'      => 'required|string',
-            'tanggal'            => 'required|date',
-            'judul_kegiatan'     => 'required|string',
-            'total_pencairan'    => 'required|numeric',
-            'files'              => 'required|array',
-            'files.*'            => 'required|mimes:pdf|max:10000',
+   public function store(Request $request)
+{
+    // 1. Validasi dengan pesan error custom agar jelas mana yang salah
+    $request->validate([
+        // Validasi nomor_spp_spm harus angka dan tepat 5 karakter
+        'nomor_spp_spm'      => 'required|digits:5', 
+        'jenis_pencairan'    => 'required|in:LS,GU,TU,LS Nihil,GU Nihil,TU Nihil',
+        'tanggal'            => 'required|date',
+        'judul_kegiatan'     => 'required|string|max:255',
+        'judul_sub_kegiatan' => 'required|string|max:255',
+        'perihal'            => 'required|string',
+        'total_pencairan'    => 'required|numeric',
+        'files'              => 'required|array|min:6',
+        'files.*'            => 'required|mimes:pdf|max:10240',
+    ], [
+        // Pesan error kustom bahasa Indonesia
+        'nomor_spp_spm.digits' => 'Nomor SPP harus berupa 5 digit angka (contoh: 00001).',
+        'nomor_spp_spm.required' => 'Nomor SPP wajib diisi.',
+        'files.*.required' => 'Dokumen ini wajib diunggah.',
+        'files.*.mimes' => 'Format dokumen harus PDF.',
+        'files.*.max' => 'Ukuran file tidak boleh lebih dari 10MB.',
+    ]);
+
+    $user = auth()->user();
+
+    // Cek apakah folder storage sudah siap
+    if (!Storage::exists('public')) {
+        Storage::makeDirectory('public');
+    }
+
+    DB::beginTransaction();
+
+    try {
+        $submission = Submission::create([
+            'user_id'            => $user->id,
+            'department_id'      => $user->department_id, 
+            'nomor_spp_spm'      => $request->nomor_spp_spm,
+            'jenis_pencairan'    => $request->jenis_pencairan,
+            'tanggal'            => $request->tanggal,
+            'judul_kegiatan'     => $request->judul_kegiatan,
+            'judul_sub_kegiatan' => $request->judul_sub_kegiatan,
+            'perihal'            => $request->perihal,
+            'total_pencairan'    => $request->total_pencairan,
+            'status'             => 'pending',
         ]);
 
-        $user = auth()->user();
-
-        DB::beginTransaction();
-
-        try {
-            // 1. Simpan Data Utama - Status Awal: pending
-            $submission = Submission::create([
-                'user_id'            => $user->id,
-                'department_id'      => $user->department_id, 
-                'nomor_spp_spm'      => $request->nomor_spp_spm,
-                'tanggal'            => $request->tanggal,
-                'judul_kegiatan'     => $request->judul_kegiatan,
-                'judul_sub_kegiatan' => $request->judul_sub_kegiatan,
-                'perihal'            => $request->perihal,
-                'total_pencairan'    => $request->total_pencairan,
-                'status'             => 'pending', // Operator lihat: Menunggu Verifikasi
-            ]);
-
-            // 2. Simpan File
-            if ($request->hasFile('files')) {
-                foreach ($request->file('files') as $jenis => $file) {
-                    
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $jenis => $file) {
+                // Pastikan file valid sebelum diproses
+                if ($file->isValid()) {
                     $safeNomorSpm = Str::slug($request->nomor_spp_spm);
-                    $fileName = strtoupper($jenis) . '_' . $safeNomorSpm . '_' . time() . '.' . $file->getClientOriginalExtension();
-                    
+                    $fileName = strtoupper(Str::slug($jenis)) . '_' . $safeNomorSpm . '_' . time() . '.' . $file->getClientOriginalExtension();
                     $folderPath = 'arsip/' . date('Y/m') . '/' . Str::slug($user->department->nama_dinas);
 
                     $path = $file->storeAs($folderPath, $fileName, 'public');
@@ -71,44 +87,91 @@ class SubmissionController extends Controller
                     ]);
                 }
             }
-
-            DB::commit();
-            return redirect()->route('submissions.index')->with('success', 'Berkas berhasil dikirim!');
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
+
+        DB::commit();
+        return redirect()->route('submissions.index')->with('success', 'Berkas berhasil dikirim!');
+
+    } catch (\Exception $e) {
+        DB::rollback();
+        // Log error ke storage/logs/laravel.log untuk kita intip penyebabnya
+        \Log::error("Gagal Simpan iDJ: " . $e->getMessage());
+        return back()->withInput()->with('error', 'Gagal memproses berkas: ' . $e->getMessage());
     }
+}
 
     public function index()
     {
         $user = auth()->user();
 
-        if ($user->hasRole('super_admin')) {
-            $submissions = Submission::with('department', 'user')->latest()->get();
+        // Allowed sort columns
+        $allowedSorts = ['tanggal', 'nomor_spp_spm', 'jenis_pencairan', 'judul_kegiatan', 'judul_sub_kegiatan', 'perihal', 'total_pencairan', 'status', 'created_at', 'departments.nama_dinas'];
+
+        $sortBy = request('sort', 'created_at');
+        $direction = request('direction', 'desc');
+
+        // Validate sort column
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'created_at';
+        }
+
+        // Validate direction
+        if (!in_array($direction, ['asc', 'desc'])) {
+            $direction = 'desc';
+        }
+
+        $query = Submission::with('department', 'user');
+
+        if (!$user->hasRole('super_admin')) {
+            $query->where('department_id', $user->department_id);
+        }
+
+        // Apply filters
+        $query->when(request('tanggal'), function($q) {
+            $q->whereDate('tanggal', request('tanggal'));
+        });
+
+        $query->when(request('jenis_pencairan'), function($q) {
+            $q->where('jenis_pencairan', request('jenis_pencairan'));
+        });
+
+        $query->when(request('nomor_spp_spm'), function($q) {
+            $q->where('nomor_spp_spm', 'like', '%' . request('nomor_spp_spm') . '%');
+        });
+
+        if ($sortBy == 'departments.nama_dinas') {
+            $submissions = $query->leftJoin('departments', 'submissions.department_id', '=', 'departments.id')
+                                 ->orderBy('departments.nama_dinas', $direction)
+                                 ->select('submissions.*')
+                                 ->get();
         } else {
-            $submissions = Submission::where('department_id', $user->department_id)
-                                ->with('user')
-                                ->latest()
-                                ->get();
+            $submissions = $query->orderBy($sortBy, $direction)->get();
         }
 
-        return view('submissions.index', compact('submissions'));
+        return view('submissions.index', compact('submissions', 'sortBy', 'direction'));
     }
 
-    public function show($id)
-    {
-        $submission = Submission::with(['department', 'user', 'documents'])->findOrFail($id);
-        $user = auth()->user();
+ public function show($id)
+{
+    // Eager load documents untuk efisiensi
+    $submission = Submission::with(['department', 'user', 'documents'])->findOrFail($id);
+    $user = auth()->user();
 
-        if ($user->hasRole('operator')) {
-            if ($submission->department_id !== $user->department_id) {
-                abort(403, 'Anda tidak memiliki akses untuk melihat berkas dinas lain.');
-            }
+    // Proteksi Akses Operator
+    if ($user->hasRole('operator')) {
+        if ($submission->department_id !== $user->department_id) {
+            abort(403, 'Anda tidak memiliki akses untuk melihat berkas dinas lain.');
         }
-
-        return view('submissions.show', compact('submission'));
     }
+
+    // LOGIKA TAMBAHAN: Cek apakah semua 6 berkas sudah disetujui (status 'approved')
+    // Ini digunakan untuk mengaktifkan/menonaktifkan tombol "Kirim ke Kabid" di View
+    $approvedCount = $submission->documents->where('status_dokumen', 'approved')->count();
+    $isAllVerified = ($approvedCount === 6);
+
+    // Kirim variabel isAllVerified ke view
+    return view('submissions.show', compact('submission', 'isAllVerified'));
+}
 
     public function editRevisi($id)
     {
@@ -120,38 +183,7 @@ class SubmissionController extends Controller
         return view('submissions.edit', compact('submission'));
     }
 
-    public function updateRevisi(Request $request, $id)
-    {
-        $submission = Submission::findOrFail($id);
-
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $docId => $file) {
-                $document = Document::findOrFail($docId);
-                
-                // Penamaan file revisi agar tetap rapi
-                $safeNomorSpm = Str::slug($submission->nomor_spp_spm);
-                $fileName = 'REVISI_' . strtoupper($document->jenis_dokumen) . '_' . $safeNomorSpm . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $folderPath = 'arsip/' . date('Y/m') . '/' . Str::slug(auth()->user()->department->nama_dinas);
-                
-                $path = $file->storeAs($folderPath, $fileName, 'public');
-
-                $document->update([
-                    'file_path' => $path,
-                    'status_dokumen' => 'pending', // Balikkan status dokumen individu ke pending
-                    'catatan' => null
-                ]);
-            }
-
-            // KUNCI: Ubah status induk menjadi 'revisi'
-            // Kasie akan melihat badge "Revisi", Operator melihat "Diperbaiki"
-            $submission->update(['status' => 'revisi']);
-
-            return redirect()->route('submissions.index')->with('success', 'Berkas perbaikan berhasil dikirim.');
-        }
-
-        return back()->with('error', 'Silakan pilih file yang akan diperbaiki.');
-    }
-
+     
 // app/Http/Controllers/SubmissionController.php
 
 public function allSubmissions(Request $request)
@@ -228,4 +260,59 @@ public function verifier()
     // Asumsi nama kolom di tabel submissions adalah verified_by
     return $this->belongsTo(User::class, 'verified_by');
 }
+
+public function update(Request $request, $id)
+{
+    $submission = Submission::findOrFail($id);
+    $user = auth()->user();
+
+    if ($request->hasFile('files')) {
+        foreach ($request->file('files') as $docId => $file) {
+            $document = Document::findOrFail($docId);
+            
+            // Buat nama file konsisten dengan fungsi store
+            $safeNomorSpm = Str::slug($submission->nomor_spp_spm);
+            $fileName = strtoupper($document->jenis_dokumen) . '_' . $safeNomorSpm . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $folderPath = 'arsip/' . date('Y/m') . '/' . Str::slug($user->department->nama_dinas);
+
+            // Simpan file
+            $path = $file->storeAs($folderPath, $fileName, 'public');
+            
+            // Update data dokumen
+            $document->update([
+                'file_path' => $path,
+                'status_dokumen' => 'direvisi', // Kembali ke pending untuk dicek ulang
+                'catatan' => null
+            ]);
+        }
+    }
+
+    // Kembalikan status induk agar muncul kembali di dashboard Verifikator
+    $submission->update([
+        'status' => 'direvisi',
+        'verified_by_name' => null, // Reset jejak verifikasi jika perlu
+        'verified_at' => null
+    ]);
+
+    return back()->with('success', 'Berkas berhasil diperbaiki dan sedang dikirim ulang ke verifikator.');
+}
+
+public function updateStatus(Request $request, $id)
+{
+    $submission = Submission::findOrFail($id);
+    
+    // 1. Update status utama
+    $submission->status = $request->status;
+    $submission->save();
+
+    // 2. Simpan jejak audit ke tabel log
+    $submission->logs()->create([
+        'user_id' => auth()->id(),
+        'status_to' => $request->status,
+        'message' => $request->catatan ?? 'Perubahan status sistem otomatis.',
+    ]);
+
+    return back()->with('success', 'Status berhasil diperbarui!');
+}
+
 }

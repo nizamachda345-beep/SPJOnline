@@ -93,8 +93,8 @@
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 small uppercase text-primary">Statistik Global</h6>
                     <div class="d-flex align-items-center">
-                        <h2 class="m-0 fw-bold">{{ $departments->count() }}</h2>
-                        <span class="ms-2 badge bg-primary bg-opacity-25 text-primary">Instansi Terdata</span>
+                        <h2 class="m-0 fw-bold">{{ $departments->count() }} SKPD</h2>
+                        <!-- <span class="ms-2 badge rounded text-primary">Instansi Terdata</span> -->
                     </div>
                     <hr class="border-secondary opacity-25 my-3">
                     <p class="small text-light-50 m-0">Data ini digunakan untuk membagi hak akses berkas berdasarkan instansi masing-masing operator.</p>

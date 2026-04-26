@@ -2,15 +2,22 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <div>
-            <h4 class="fw-bold text-primary mb-0">Detail Riwayat Arsip</h4>
-            <p class="text-muted small">Melihat rincian berkas yang telah diproses oleh sistem.</p>
+    <div class="card border-0 shadow-sm bg-light bg-opacity-25 rounded-4 p-3 mb-2 border-start border-warning border-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div class="icon-box bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                <i class="fas fa-file-archive fa-2x text-primary"></i>
+            </div>
+            <div>
+                <h4 class="fw-bold text-dark mb-1">Detail Riwayat Arsip</h4>
+                <p class="text-muted small mb-0">Melihat rincian berkas yang telah diproses oleh sistem.</p>
+            </div>
         </div>
-        <a href="{{ route('history.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ route('history.index') }}" class="btn btn-outline-dark btn-sm rounded-pill px-3 shadow-sm">
             <i class="fas fa-arrow-left me-1"></i> Kembali
         </a>
     </div>
+</div>
 
     <div class="row g-4">
         <div class="col-xl-8">

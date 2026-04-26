@@ -20,38 +20,71 @@
 <body>
 <div id="vanta-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
             
-<nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm py-2">
+<nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm py-2 bg-white">
     <div class="container-fluid px-4">
-        <a class="navbar-brand fw-semibold" href="#">
-            <i class="fas fa-file-invoice-dollar me-2"></i> iDJ <small class="fw-light" style="font-size: 0.75rem;">v1.0</small>
-        </a>
         
-        @auth
-        <!-- Sidebar Toggle Button for Mobile -->
-        <button class="btn btn-outline-secondary d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
-            <i class="fas fa-bars"></i>
-        </button>
-        @endauth
-        
-        @auth
-        <div class="ms-auto d-flex align-items-center">
-            <div class="dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-user-circle fa-lg"></i> {{ auth()->user()->name }}
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                    <li>
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-danger">
-                                <i class="fas fa-sign-out-alt me-2"></i> Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
+        <div class="d-flex align-items-center">
+            <a class="navbar-brand fw-bold d-flex align-items-center me-0" href="#">
+                <i class="fas fa-file-invoice-dollar text-primary me-2"></i> 
+                <span>iDJ</span> 
+                <small class="fw-light ms-1 text-muted" style="font-size: 0.7rem;">v1.0</small>
+            </a>
+
+           <div class="vr mx-3 opacity-25" style="height: 1.5rem; align-self: center;"></div>
+
+            <div class="text-muted fw-semibold text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                @if(auth()->user()->hasRole('super_admin'))
+                    <span class="badge rounded-pill bg-primary px-3">SU</span>
+                @elseif(auth()->user()->hasRole('operator'))
+                    {{ auth()->user()->getRoleNames()->first() }} 
+                    <span class="fw-light">—</span> 
+                    {{ auth()->user()->department->nama_dinas }}
+                @elseif(auth()->user()->hasRole('kasie_bud') || auth()->user()->hasRole('kabid_perbendaharaan'))
+                    <span class="badge rounded-pill bg-primary px-3">{{ auth()->user()->getRoleNames()->first() }}</span>
+                @elseif(auth()->user()->hasRole('bpk'))
+                    <span class="badge rounded-pill bg-warning px-3">{{ auth()->user()->getRoleNames()->first() }}</span>
+                @else
+                    <span class="badge bg-secondary">No Access</span>
+                @endif
             </div>
         </div>
-        @endauth
+
+        <div class="ms-auto d-flex align-items-center">
+            
+            @auth
+                <button class="btn btn-light d-md-none me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div class="dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center p-0" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                            <i class="fas fa-user text-secondary"></i>
+                        </div>
+                        <span class="fw-semibold text-dark" style="font-size: 0.7rem;">
+                            {{ auth()->user()->name }}
+                        </span>
+                    </a>
+                    
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3" style="border-radius: 12px; min-width: 200px; overflow: hidden;">
+                        <li class="px-3 py-2 border-bottom bg-light">
+                            <small class="text-muted d-block">Status Login</small>
+                            <span class="fw-bold small text-dark">{{ auth()->user()->email }}</span>
+                        </li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="dropdown-item text-danger py-1 px-3 d-flex align-items-center">
+                                    <i class="fas fa-sign-out-alt me-2" style="font-size: 0.8rem;"></i> 
+                                    <span class="fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">LOGOUT</span>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            @endauth
+
+        </div>
     </div>
 </nav>
 
@@ -86,7 +119,7 @@
                     @role('operator')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('submissions/create') ? 'active' : '' }}" href="{{ route('submissions.create') }}">
-                            <i class="fas fa-cloud-upload-alt me-2"></i> Upload Berkas
+                            <i class="fas fa-cloud-upload-alt me-2"></i> Upload Dokumen
                         </a>
                     </li>
                     <li class="nav-item">
@@ -369,12 +402,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 el: "#vanta-bg",
                 mouseControls: true,
                 touchControls: true,
-                gyroControls: false,
+                gyroControls: true,
                 minHeight: 200.00,
                 minWidth: 200.00,
                 scale: 1.00,
                 scaleMobile: 1.00,
-                color: 0xb3d9ff, // Pastel blue untuk background
+                color: 0x5c5c5c, // Pastel blue untuk background
                 shininess: 30.00,
                 waveHeight: 15.00,
                 waveSpeed: 0.80,
@@ -388,6 +421,90 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Jalankan setelah seluruh window (termasuk script luar) selesai dimuat
     window.addEventListener('load', initVanta);
+</script>
+
+<script>
+    // Mengaktifkan semua tooltip di halaman
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+</script>
+
+<script>
+    function startLiveTime() {
+        const timeElement = document.getElementById('liveDateTime');
+        
+        function update() {
+            const now = new Date();
+            
+            // Format Tanggal (Contoh: Selasa, 21 April 2026)
+            const dateStr = now.toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                timeZone: 'Asia/Makassar'
+            });
+
+            // Format Jam (Contoh: 15.30.01)
+            const timeStr = now.toLocaleTimeString('id-ID', {
+                timeZone: 'Asia/Makassar',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).replace(/:/g, ':'); // Memastikan pemisah jam standar
+
+            timeElement.innerText = `${dateStr} | ${timeStr} WIB`;
+        }
+
+        setInterval(update, 1000);
+        update(); // Jalankan langsung tanpa menunggu interval
+    }
+
+    // Pastikan DOM sudah siap sebelum menjalankan script
+    document.addEventListener('DOMContentLoaded', startLiveTime);
+</script>
+
+{{-- Pastikan Script WITA tetap ada --}}
+<script>
+    function startLiveTimeWITA() {
+        const timeElement = document.getElementById('liveDateTimeWITA');
+        if(!timeElement) return;
+
+        function update() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Makassar'
+            });
+            const timeStr = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Makassar'
+            });
+            timeElement.innerText = `${dateStr} | ${timeStr} WITA`;
+        }
+        setInterval(update, 1000);
+        update();
+    }
+    document.addEventListener('DOMContentLoaded', startLiveTimeWITA);
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Targetkan alert sukses
+        const successAlert = document.querySelector('.alert-success');
+        
+        if (successAlert) {
+            // Tunggu 5 detik (5000ms)
+            setTimeout(function() {
+                // Tambahkan transisi halus menggunakan CSS
+                successAlert.style.transition = "opacity 0.8s ease";
+                successAlert.style.opacity = "0";
+                
+                // Hapus elemen sepenuhnya dari layar setelah animasi selesai
+                setTimeout(function() {
+                    successAlert.remove();
+                }, 800);
+            }, 5000);
+        }
+    });
 </script>
 
 </body>

@@ -33,7 +33,7 @@ class ValidasiController extends Controller
         // Update status dan isi jejak digital Kabid Perbendaharaan
         $submission->update([
             'status' => 'disetujui',
-            'validated_by_name' => auth()->user()->name,
+            'validated_by' => auth()->user()->name,
             'validated_at' => now(),
         ]);
 

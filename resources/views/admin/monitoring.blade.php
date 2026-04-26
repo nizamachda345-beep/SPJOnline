@@ -87,23 +87,33 @@
                                     <span class="badge bg-warning text-dark">Pending</span>
                                 @endif
                             </td>
-                            <td class="text-center pe-3">
-                                <div class="btn-group">
-                                    <a href="{{ route('monitoring.show', $s->id) }}" class="btn btn-sm btn-light border btn-pill" title="Lihat Detail">
-                                        <i class="fas fa-eye text-primary"></i>
-                                    </a>
-                                    @role('super_admin')
-                                        @if($s->status != 'pending')
-                                        <form action="{{ route('admin.submissions.reset', $s->id) }}" method="POST" onsubmit="return confirm('Peringatan: Verifikasi/Validasi akan dihapus dan status kembali ke awal. Lanjutkan?')">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-light border btn-pill" title="Batalkan Verifikasi/Validasi">
-                                                <i class="fas fa-undo-alt text-danger"></i>
-                                            </button>
-                                        </form>
-                                        @endif
-                                    @endrole
-                                </div>
-                            </td>
+                           <td class="text-center pe-3">
+    <div class="d-flex justify-content-center gap-2">
+        
+        <a href="{{ route('monitoring.show', $s->id) }}" 
+           class="btn btn-sm btn-light border btn-pill shadow-sm" 
+           title="Lihat Detail">
+            <i class="fas fa-eye text-primary"></i>
+        </a>
+
+        @role('super_admin')
+            @if($s->status != 'pending')
+            <form action="{{ route('admin.submissions.reset', $s->id) }}" 
+                  method="POST" 
+                  class="d-inline"
+                  onsubmit="return confirm('Peringatan: Verifikasi/Validasi akan dihapus dan status kembali ke awal. Lanjutkan?')">
+                @csrf
+                <button type="submit" 
+                        class="btn btn-sm btn-light border btn-pill shadow-sm" 
+                        title="Batalkan Verifikasi/Validasi">
+                    <i class="fas fa-undo-alt text-danger"></i>
+                </button>
+            </form>
+            @endif
+        @endrole
+
+    </div>
+</td>
                         </tr>
                         @empty
                         <tr>

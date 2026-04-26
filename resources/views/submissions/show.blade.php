@@ -2,13 +2,13 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="row mb-3">
+    <div class="row mb-1">
         <div class="col-md-8">
             <h4 class="fw-bold text-uppercase">Detail Pengajuan Berkas iDJ</h4>
-            <p class="text-muted">Nomor SPM: {{ $submission->nomor_spp_spm }}</p>
+            <p class="badge bg-light text-muted">Nomor SPP: {{ $submission->nomor_spp_spm }}</p>
         </div>
         <div class="col-md-4 text-md-end">
-            <a href="{{ route('submissions.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('submissions.index') }}" class="btn bg-dark btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i> Kembali
             </a>
         </div>
@@ -47,8 +47,8 @@
                                     <span class="badge bg-success">Selesai (Disetujui)</span>
                                 @elseif($submission->status == 'ditolak')
                                     <span class="badge bg-danger">Ditolak / Perlu Perbaikan</span>
-                                @elseif($submission->status == 'rejected')
-                                    <span class="badge bg-danger">Menunggu Revisi</span>
+                                @elseif($submission->status == 'revisi')
+                                    <span class="badge bg-danger"><i class="fas fa-spinner fa-spin me-1"></i>Menunggu Revisi</span>
                                 @endif
                             </td>
                         </tr>
@@ -77,7 +77,7 @@
                                 <i class="fas fa-file-pdf text-danger me-2 fa-lg"></i>
                                 <span class="fw-bold text-uppercase">{{ str_replace('_', ' ', $doc->jenis_dokumen) }}</span>
                             </div>
-                            <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn btn-sm btn-primary">
+                            <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-download me-1"></i> Lihat / Download
                             </a>
                         </li>

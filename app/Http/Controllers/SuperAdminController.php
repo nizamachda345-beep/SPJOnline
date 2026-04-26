@@ -72,14 +72,32 @@ class SuperAdminController extends Controller
 }
 
 // Tambahkan juga fungsi reset agar tombolnya jalan
+// app/Http/Controllers/SuperAdminController.php
+
 public function resetStatus($id)
 {
-    $submission = \App\Models\Submission::findOrFail($id);
-    $submission->update(['status' => 'pending']);
-    
-    // Update juga status semua dokumen di bawahnya
-    $submission->documents()->update(['status_dokumen' => 'pending']);
+    // Gunakan DB Transaction agar jika salah satu gagal, semua dibatalkan
+    return \DB::transaction(function () use ($id) {
+        $submission = Submission::findOrFail($id);
 
-    return back()->with('success', 'Status berkas berhasil direset ke Pending.');
+        // 1. Reset data induk (Submission)
+        $submission->update([
+            'status'             => 'reset', // Menggunakan status reset yang baru kita buat
+            'verified_by_name'   => null,
+            'verified_at'        => null,
+            'validated_by_name'  => null,
+            'validated_at'       => null,
+            'catatan'            => 'Status telah direset oleh Admin pada ' . now()->format('d/m/Y H:i'),
+        ]);
+
+        // 2. Reset semua status dokumen terkait menjadi pending kembali
+        // Ini penting agar operator bisa mengunggah ulang jika perlu
+        $submission->documents()->update([
+            'status_dokumen' => 'pending',
+            'catatan'        => 'Direset oleh Admin'
+        ]);
+
+        return redirect()->back()->with('success', 'Berkas berhasil direset ke titik awal.');
+    });
 }
 }

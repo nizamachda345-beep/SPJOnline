@@ -81,6 +81,11 @@ Route::middleware(['auth'])->group(function () {
 
         ->middleware('role:kabid_perbendaharaan|kasie_bud|super_admin');
 
+      Route::middleware(['auth', 'role:super_admin|kasie_bud|kabid_perbendaharaan'])->group(function () {
+    Route::get('/history/export', [HistoryController::class, 'exportExcel'])->name('history.export');
+    Route::get('/history/print', [HistoryController::class, 'printPDF'])->name('history.print');
+});
+
 
 
     Route::get('/history/{id}', [HistoryController::class, 'show'])
@@ -150,6 +155,10 @@ Route::resource('departments', DepartmentController::class);
 
         Route::post('/verifikasi/{id}/tolak', [VerifikasiController::class, 'tolak'])->name('verifikasi.tolak');
 
+    // Pastikan mengarah ke VerifikasiController
+Route::post('/verifikasi/{id}/send-to-kabid', [VerifikasiController::class, 'sendToKabid'])
+    ->name('submissions.sendToKabid');
+
     });
 
 
@@ -178,6 +187,7 @@ Route::middleware(['auth', 'role:bpk'])->prefix('audit')->name('bpk.')->group(fu
     Route::get('/monitoring', [BpkController::class, 'index'])->name('monitoring');
     Route::get('/detail/{id}', [BpkController::class, 'show'])->name('show');
 });
+
 
 
 
