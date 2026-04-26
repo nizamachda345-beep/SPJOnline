@@ -186,59 +186,6 @@ class SubmissionController extends Controller
      
 // app/Http/Controllers/SubmissionController.php
 
-public function allSubmissions(Request $request)
-{
-    $query = Submission::with('department');
-
-    // 1. FILTER TAHUN ANGGARAN (Sebagai scope dasar)
-    // Selalu batasi berdasarkan tahun anggaran yang dipilih atau tahun berjalan
-    $tahun = $request->get('tahun', date('Y'));
-    $query->whereYear('tanggal', $tahun);
-
-    // 2. FILTER AKUMULATIF (Hanya aktif jika input diisi)
-    // Menggunakan where() berantai sehingga fungsinya menjadi "AND"
-    
-    if ($request->filled('tanggal')) {
-        $query->whereDate('tanggal', $request->tanggal);
-    }
-
-    if ($request->filled('nomor')) {
-        // Cari yang mengandung nomor tersebut (LIKE)
-        $query->where('nomor_spp_spm', 'like', '%' . $request->nomor . '%');
-    }
-
-    if ($request->filled('dinas')) {
-        $query->where('department_id', $request->dinas);
-    }
-
-    if ($request->filled('min_nominal')) {
-        // Jika ingin nominal yang PERSIS sama, gunakan '='
-        // Jika ingin minimal, gunakan '>='
-        $query->where('total_pencairan', '=', $request->min_nominal);
-    }
-
-    // 3. LOGIKA SORTING (Pengurutan)
-    $sortField = $request->get('sort'); 
-    $order = $request->get('order', 'desc'); 
-
-    if ($sortField == 'nominal') {
-        $query->orderBy('total_pencairan', $order);
-    } elseif ($sortField == 'dinas') {
-        $query->join('departments', 'submissions.department_id', '=', 'departments.id')
-              ->select('submissions.*') // Penting agar ID submission tidak tertukar ID dinas
-              ->orderBy('departments.nama_dinas', $order);
-    } else {
-        // Default: Berkas terbaru di atas
-        $query->orderBy('created_at', 'desc');
-    }
-
-    // 4. EKSEKUSI
-    $submissions = $query->get();
-    $departments = Department::all();
-
-    return view('bpk.monitoring', compact('submissions', 'departments'));
-}
-
 public function resetStatus($id)
 {
     $submission = Submission::findOrFail($id);
@@ -253,12 +200,6 @@ public function resetStatus($id)
     ]);
 
     return redirect()->back()->with('warning', 'Status berkas berhasil direset ke Pending.');
-}
-
-public function verifier()
-{
-    // Asumsi nama kolom di tabel submissions adalah verified_by
-    return $this->belongsTo(User::class, 'verified_by');
 }
 
 public function update(Request $request, $id)
@@ -295,24 +236,6 @@ public function update(Request $request, $id)
     ]);
 
     return back()->with('success', 'Berkas berhasil diperbaiki dan sedang dikirim ulang ke verifikator.');
-}
-
-public function updateStatus(Request $request, $id)
-{
-    $submission = Submission::findOrFail($id);
-    
-    // 1. Update status utama
-    $submission->status = $request->status;
-    $submission->save();
-
-    // 2. Simpan jejak audit ke tabel log
-    $submission->logs()->create([
-        'user_id' => auth()->id(),
-        'status_to' => $request->status,
-        'message' => $request->catatan ?? 'Perubahan status sistem otomatis.',
-    ]);
-
-    return back()->with('success', 'Status berhasil diperbarui!');
 }
 
 }

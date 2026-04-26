@@ -14,8 +14,6 @@ use App\Http\Controllers\VerifikasiController;
 
 use App\Http\Controllers\ValidasiController;
 
-use App\Http\Controllers\AdminController;
-
 use App\Http\Controllers\HistoryController;
 
 use App\Http\Controllers\Admin\DepartmentController;
@@ -106,7 +104,7 @@ Route::middleware(['auth'])->group(function () {
 
   Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->group(function () {
     // Dashboard & Monitoring
-   Route::get('/admin/dashboard', [App\Http\Controllers\SuperAdminController::class, 'dashboard'])->name('admin.dashboard');
+   Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/monitoring', [SuperAdminController::class, 'index'])->name('admin.monitoring');
     Route::post('/submissions/{id}/reset', [SuperAdminController::class, 'resetStatus'])->name('admin.submissions.reset');
 Route::get('/monitoring/{id}', [SuperAdminController::class, 'show'])->name('monitoring.show');
@@ -116,11 +114,6 @@ Route::get('/monitoring/{id}', [SuperAdminController::class, 'show'])->name('mon
     Route::resource('users', UserController::class);
 Route::resource('departments', DepartmentController::class);
     Route::post('/users/{id}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset_password');
-    // Manajemen Dinas (OPD)
-    Route::get('/department', [DepartmentController::class, 'index'])->name('department.index');
-    Route::post('/department', [DepartmentController::class, 'store'])->name('department.store');
-    Route::put('/department/{id}', [DepartmentController::class, 'update'])->name('department.update');
-    Route::delete('/department/{id}', [DepartmentController::class, 'destroy'])->name('department.destroy');
     });
 
 
