@@ -81,13 +81,6 @@ Buka alamat yang ditampilkan oleh server Laravel, biasanya `http://127.0.0.1:800
 
 Hak akses aktual ditentukan oleh role dan middleware aplikasi.
 
-## Dokumentasi
-
-- [SOP Sistem](SOP_Sistem.md)
-- [Indeks paket SOP](docs/sop/INDEKS-SOP.md)
-- [Ringkasan pekerjaan dokumentasi SOP](docs/sop/RINGKASAN-PEKERJAAN.md)
-- Dokumen audit dan hasil pemeriksaan tersedia di berkas Markdown pada direktori utama.
-
 ## Perintah berguna
 
 ```bash
