@@ -12,7 +12,7 @@ return new class extends Migration
    public function up()
 {
     Schema::table('submissions', function (Blueprint $table) {
-        $table->string('jenis_pencairan')->after('nomor_spp_spm');
+        $table->string('jenis_pencairan')->after('department_id');
     });
 }
     /**
@@ -21,7 +21,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('submissions', function (Blueprint $table) {
-            //
         });
     }
 };

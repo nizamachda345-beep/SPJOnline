@@ -15,7 +15,6 @@ return new class extends Migration
         $table->unsignedBigInteger('verified_by')->nullable()->after('verified_at');
         $table->unsignedBigInteger('validated_by')->nullable()->after('validated_at');
 
-        // Opsional: Tambahkan foreign key agar data konsisten
         $table->foreign('verified_by')->references('id')->on('users');
         $table->foreign('validated_by')->references('id')->on('users');
     });
@@ -27,7 +26,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('submissions', function (Blueprint $table) {
-            //
         });
     }
 };

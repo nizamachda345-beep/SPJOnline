@@ -3,19 +3,42 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany; // Opsional: untuk type-hinting yang lebih pro
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Services\SystemSettingsService;
 
 class Department extends Model
 {
-    // 1. Definisikan kolom yang boleh diisi (Mass Assignment)
-    protected $fillable = ['nama_dinas', 'kode_dinas'];
+    protected $fillable = [
+        'nama_dinas',
+        'kode_dinas',
+        'akses_pengajuan_manual',
+        'akses_pengajuan_dibuka_oleh',
+    ];
 
-    /**
-     * Relasi ke Model User
-     * Satu Dinas memiliki banyak User (Operator)
-     */
+    protected $casts = [
+        'akses_pengajuan_manual' => 'boolean',
+    ];
+
+    // Method: users
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
-} // <--- Pastikan kurung kurawal penutup class ada di paling bawah
+
+    // Method: baRekons
+    public function baRekons(): HasMany
+    {
+        return $this->hasMany(BaRekon::class);
+    }
+
+    // Method: canUpload
+    public static function canUpload($departmentId)
+    {
+        $department = static::find($departmentId);
+        if (!$department) {
+            return false;
+        }
+
+        return app(SystemSettingsService::class)->submissionAvailability($department)['allowed'];
+    }
+}

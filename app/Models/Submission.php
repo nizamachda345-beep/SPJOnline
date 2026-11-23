@@ -4,96 +4,103 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Submission extends Model
 {
     use HasFactory;
+
     const STATUS_RESET = 'reset';
 
     protected $fillable = [
-    'user_id',
-    'department_id',
-    'nomor_spp_spm',
-    'tanggal',
-    'judul_kegiatan',
-    'judul_sub_kegiatan',
-    'perihal',
-    'total_pencairan',
-    'status',
-    // Kolom Baru
-    'verified_by_name',
-    'verified_at',
-    'validated_by_name',
-    'validated_at',
-    'catatan',
-    'jenis_pencairan',
+        'user_id', 'department_id', 'nomor_spp', 'nomor_spm', 'jenis_pencairan',
+        'tanggal', 'judul_kegiatan', 'judul_sub_kegiatan', 'perihal',
+        'total_pencairan', 'status', 'catatan_kabid', 'catatan',
+        'verified_by_name', 'verified_at', 'verified_by',
+        'validated_at', 'validated_by_name', 'validated_by',
+        'sent_to_kabid_by_name', 'sent_to_kabid_at', 'rejected_at',
+        'revised_at', 'revisi_at', 'tolak_by', 'reset_at', 'tolak_by_kabid', 'status_audit', 'catatan_audit', 'sumber_dana','tanggal_spp','tanggal_spm', 'expires_at',
     ];
 
-// Supaya tanggal otomatis jadi objek Carbon (mudah diformat)
-protected $casts = [
-    'verified_at' => 'datetime',
-    'validated_at' => 'datetime',
-    'tanggal' => 'date',
-];
+    protected $casts = [
+        'verified_at'      => 'datetime',
+        'validated_at'     => 'datetime',
+        'tanggal'          => 'date',
+        'sent_to_kabid_at' => 'datetime',
+        'rejected_at'      => 'datetime',
+        'revised_at'       => 'datetime',
+        'revisi_at'        => 'datetime',
+        'reset_at'         => 'datetime',
+        'tolak_by'         => 'integer',
+        'tolak_by_kabid'   => 'integer',
+    ];
 
-    // Relasi ke User (Siapa yang upload)
+    // Method: user
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relasi ke Dinas
+    // Method: department
     public function department()
     {
         return $this->belongsTo(Department::class);
     }
 
-    // Relasi ke banyak dokumen/file PDF
+    // Method: documents
     public function documents()
     {
         return $this->hasMany(Document::class);
     }
 
-    // app/Models/Submission.php
-
-public function scopeFilter($query, array $filters)
-{
-    // Filter berdasarkan Nomor SPP/SPM (Pencarian Parsial)
-    $query->when($filters['nomor'] ?? false, function ($query, $nomor) {
-        return $query->where('nomor_spp_spm', 'like', '%' . $nomor . '%');
-    });
-
-    // Filter berdasarkan Dinas
-    $query->when($filters['dinas'] ?? false, function ($query, $dinas) {
-        return $query->where('department_id', $dinas);
-    });
-
-    // Filter berdasarkan Tanggal Spesifik
-    $query->when($filters['tanggal'] ?? false, function ($query, $tanggal) {
-        return $query->whereDate('created_at', $tanggal);
-    });
-
-    // Filter berdasarkan Minimal Nominal
-    $query->when($filters['min_nominal'] ?? false, function ($query, $min) {
-        return $query->where('total_pencairan', '>=', $min);
-    });
-}
-
-// Tambahkan di App\Models\Submission.php
-
-public function getStatusLabelAttribute()
+    // Method: penolak
+    public function penolak()
     {
-        // 1. Logika untuk status RESET (Oleh Admin)
+        return $this->belongsTo(User::class, 'tolak_by');
+    }
+
+    // Method: penolakKabid
+    public function penolakKabid()
+    {
+        return $this->belongsTo(User::class, 'tolak_by_kabid');
+    }
+
+    // Method: scopeFilter
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['nomor_spp'] ?? false, function ($query, $spp) {
+            return $query->where('nomor_spp', 'like', '%' . $spp . '%');
+        });
+
+        $query->when($filters['nomor_spm'] ?? false, function ($query, $spm) {
+            return $query->where('nomor_spm', 'like', '%' . $spm . '%');
+        });
+
+        $query->when($filters['dinas'] ?? false, function ($query, $dinas) {
+            return $query->where('department_id', $dinas);
+        });
+
+        $query->when($filters['tanggal'] ?? false, function ($query, $tanggal) {
+            return $query->whereDate('created_at', $tanggal);
+        });
+
+        $query->when($filters['min_nominal'] ?? false, function ($query, $min) {
+            return $query->where('total_pencairan', '>=', $min);
+        });
+    }
+
+    // Method: getStatusLabelAttribute
+    public function getStatusLabelAttribute()
+    {
         if ($this->status === self::STATUS_RESET) {
             return [
                 'label' => 'Direset Admin',
                 'sub'   => 'Data kembali ke Operator',
-                'color' => 'dark', // Kita pakai warna gelap
+                'color' => 'dark',
                 'icon'  => 'fa-undo'
             ];
         }
 
-        // 2. Logika untuk status REVISI/PENDING ULANG
         if ($this->status === 'pending' && $this->verified_by_name !== null) {
             return [
                 'label' => 'Menunggu Verifikasi',
@@ -103,15 +110,39 @@ public function getStatusLabelAttribute()
             ];
         }
 
-        // 3. Logika Standar
         return match($this->status) {
-            'pending' => ['label' => 'Menunggu Verifikasi', 'sub' => null, 'color' => 'warning', 'icon' => 'fa-clock'],
-            'revisi'  => ['label' => 'Perlu Revisi',         'sub' => null, 'color' => 'danger',  'icon' => 'fa-exclamation-circle'],
-            'verified'=> ['label' => 'Disetujui',           'sub' => null, 'color' => 'success', 'icon' => 'fa-check-circle'],
-            'proses validasi' => ['label' => 'Proses Validasi', 'sub' => 'Menunggu Kabid', 'color' => 'primary', 'icon' => 'fa-file-signature'],
-            default   => ['label' => ucfirst($this->status), 'sub' => null, 'color' => 'secondary', 'icon' => 'fa-info-circle'],
+            'pending'         => ['label' => 'Menunggu Verifikasi', 'sub' => null, 'color' => 'warning', 'icon' => 'fa-clock'],
+            'revisi'          => ['label' => 'Perlu Revisi',        'sub' => null, 'color' => 'danger',  'icon' => 'fa-exclamation-circle'],
+            'rejected'        => ['label' => 'Ditolak Kabid',       'sub' => null, 'color' => 'danger',  'icon' => 'fa-times-circle'],
+            'verified'        => ['label' => 'Disetujui',           'sub' => null, 'color' => 'success', 'icon' => 'fa-check-circle'],
+            'proses validasi' => ['label' => 'Proses Validasi',     'sub' => 'Menunggu Kabid', 'color' => 'primary', 'icon' => 'fa-file-signature'],
+            default           => ['label' => ucfirst($this->status), 'sub' => null, 'color' => 'secondary', 'icon' => 'fa-info-circle'],
         };
     }
-    
+
+    // Method: getRiwayatProsesAttribute
+    public function getRiwayatProsesAttribute()
+    {
+        if ($this->validated_at) {
+            return "Disahkan oleh " . $this->validated_by_name;
+        }
+        if ($this->verified_at) {
+            return "Diverifikasi oleh " . $this->verified_by_name;
+        }
+        return "Tahap Operator";
+    }
+
+// Method: getStatusAttribute
+public function getStatusAttribute($value)
+{
+    if ($value === 'pending' && $this->attributes['expires_at'] && Carbon::now()->greaterThan(Carbon::parse($this->attributes['expires_at']))) {
+        $this->attributes['status'] = 'expired';
+        self::where('id', $this->id)->update(['status' => 'expired']);
+
+        return 'expired';
+    }
+
+    return $value;
+}
 
 }

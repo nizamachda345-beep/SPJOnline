@@ -12,7 +12,6 @@ return new class extends Migration
 public function up(): void
 {
     Schema::table('users', function (Blueprint $table) {
-        // Menambahkan kolom department_id yang terhubung ke tabel departments
         $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('cascade');
     });
 }
@@ -23,7 +22,6 @@ public function up(): void
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
         });
     }
 };

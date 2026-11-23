@@ -1,4 +1,4 @@
-        {{-- 1. TOTAL PENGAJUAN --}}
+{{-- View: components/_stats_data --}}
         <div class="col">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -13,7 +13,6 @@
             </div>
         </div>
 
-        {{-- 2. PENDING (BARU) --}}
         <div class="col">
             <div class="card h-100 shadow-sm border-0 border-start border-primary border-4">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -28,7 +27,6 @@
             </div>
         </div>
 
-        {{-- 3. PERLU REVISI (KASIE BUD) --}}
         <div class="col">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -43,7 +41,6 @@
             </div>
         </div>
 
-        {{-- 4. DITOLAK (KABID) --}}
         <div class="col">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -58,7 +55,6 @@
             </div>
         </div>
 
-        {{-- 5. SELESAI --}}
         <div class="col">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body d-flex align-items-center gap-3">
@@ -72,4 +68,3 @@
                 </div>
             </div>
         </div>
-    

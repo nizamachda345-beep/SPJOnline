@@ -1,0 +1,26 @@
+{
+  "resources/css/app.css": {
+    "file": "assets/app-DW2N5X40.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/css/idj.css": {
+    "file": "assets/idj-CmNzPYcR.css",
+    "name": "idj",
+    "names": [
+      "idj.css"
+    ],
+    "src": "resources/css/idj.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-34mOoJaZ.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}

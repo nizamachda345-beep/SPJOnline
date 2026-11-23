@@ -12,7 +12,6 @@ return new class extends Migration
     public function up()
 {
     Schema::table('submissions', function (Blueprint $table) {
-        // Kolom untuk mencatat pengiriman ke Kabid
         $table->timestamp('sent_to_kabid_at')->nullable();
         $table->string('sent_to_kabid_by_name')->nullable();
     });
@@ -24,7 +23,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('submissions', function (Blueprint $table) {
-            //
         });
     }
 };

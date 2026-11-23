@@ -7,86 +7,81 @@ use App\Models\Department;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class RoleUserSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. BUAT ROLE (Pastikan Spatie Permission sudah terinstall)
         $roles = ['super_admin', 'operator', 'kabid_perbendaharaan', 'bpk', 'kasie_bud'];
         foreach ($roles as $roleName) {
             Role::updateOrCreate(['name' => $roleName]);
         }
 
-        // 2. AMBIL DATA DINAS (Pastikan DepartmentSeeder sudah dijalankan lebih dulu)
-        $bkd = Department::where('nama_dinas', 'BADAN KEUANGAN DAERAH')->first();
-        $dinkes = Department::where('nama_dinas', 'DINAS KESEHATAN')->first();
+        $allDepartments = Department::all();
 
-        // Proteksi: Jika dinas tidak ditemukan, hentikan seeder agar tidak terjadi error "null"
-        if (!$bkd || !$dinkes) {
-            $this->command->error('Gagal Seeding: Data Dinas BKD atau Dinkes tidak ditemukan di database!');
+        if ($allDepartments->isEmpty()) {
+            $this->command->error('Gagal Seeding: Tidak ada data Dinas ditemukan. Jalankan DepartmentSeeder dulu!');
             return;
         }
 
-        // 3. DAFTAR USER YANG AKAN DIBUAT
-        $users = [
+        $bkd = Department::where('nama_dinas', 'LIKE', '%BADAN KEUANGAN DAERAH%')->first();
+
+        $specialUsers = [
             [
-                'name' => 'Admin iDJ Bolmong',
-                'email' => 'admin@bolmong.go.id',
+                'name' => 'Nizam Achda',
+                'email' => 'SU@bolmong.go.id',
                 'password' => Hash::make('password'),
-                'department_id' => $bkd->id,
+                'department_id' => $bkd->id ?? $allDepartments->first()->id,
                 'role' => 'super_admin',
             ],
             [
-                'name' => 'Kepala Seksi BUD',
+                'name' => 'Sofiah Y. Matantu, SH',
                 'email' => 'kasie.bud@bolmong.go.id',
                 'password' => Hash::make('password'),
-                'department_id' => $bkd->id,
+                'department_id' => $bkd->id ?? $allDepartments->first()->id,
                 'role' => 'kasie_bud',
             ],
             [
-                'name' => 'Operator BKD',
-                'email' => 'operator.bkd@bolmong.go.id',
-                'password' => Hash::make('password'),
-                'department_id' => $bkd->id,
-                'role' => 'operator',
-            ],
-            [
-                'name' => 'Operator Dinkes',
-                'email' => 'operator.dinkes@bolmong.go.id',
-                'password' => Hash::make('password'),
-                'department_id' => $dinkes->id,
-                'role' => 'operator',
-            ],
-            [
-                'name' => 'Kabid Perbendaharaan',
+                'name' => 'Wawan S. Gaib, SE',
                 'email' => 'kabid@bolmong.go.id',
                 'password' => Hash::make('password'),
-                'department_id' => $bkd->id,
+                'department_id' => $bkd->id ?? $allDepartments->first()->id,
                 'role' => 'kabid_perbendaharaan',
             ],
             [
                 'name' => 'Tim Pemeriksa BPK',
                 'email' => 'bpk@bolmong.go.id',
                 'password' => Hash::make('password'),
-                'department_id' => $bkd->id,
+                'department_id' => $bkd->id ?? $allDepartments->first()->id,
                 'role' => 'bpk',
             ],
         ];
 
-        // 4. EKSEKUSI PEMBUATAN USER
-        foreach ($users as $userData) {
-            $role = $userData['role'];
-            unset($userData['role']); // Hapus key role agar tidak bentrok dengan fillable User
-
-            $user = User::updateOrCreate(
-                ['email' => $userData['email']],
-                $userData
-            );
-
+        foreach ($specialUsers as $sUser) {
+            $role = $sUser['role'];
+            unset($sUser['role']);
+            $user = User::updateOrCreate(['email' => $sUser['email']], $sUser);
             $user->assignRole($role);
         }
 
-        $this->command->info('RoleUserSeeder berhasil dijalankan. Semua user sudah memiliki department_id.');
+        foreach ($allDepartments as $dept) {
+            $slug = Str::slug($dept->kode_dinas);
+            $email = "operator." . $slug . "@bolmong.go.id";
+
+            $operator = User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'name' => "Operator " . $dept->kode_dinas,
+                    'email' => $email,
+                    'password' => Hash::make('password'), // Password default
+                    'department_id' => $dept->id,
+                ]
+            );
+
+            $operator->assignRole('operator');
+        }
+
+        $this->command->info('RoleUserSeeder sukses: User pimpinan dibuat & 1 Operator per SKPD telah aktif.');
     }
 }

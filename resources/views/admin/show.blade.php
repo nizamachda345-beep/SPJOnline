@@ -1,385 +1,412 @@
+{{-- View: admin/show --}}
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    {{-- Breadcrumbs --}}
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb bg-light rounded-3 px-3 py-2">
-            <li class="breadcrumb-item">
-                <a href="{{ route('admin.dashboard') }}" class="text-decoration-none">
-                    <i class="fas fa-home me-1"></i> Dashboard
-                </a>
-            </li>
-            <li class="breadcrumb-item">
-                <a href="{{ route('admin.monitoring') }}" class="text-decoration-none">Monitoring</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">Detail Berkas #{{ $submission->id }}</li>
-        </ol>
-    </nav>
+<div class="container-fluid min-vh-100 text-light py-2">
 
-    {{-- Header & Tombol Kembali --}}
-    <div class="row mb-4">
-        <div class="col-md-12 d-flex justify-content-between align-items-center">
-            <div>
-                <a href="{{ route('admin.monitoring') }}" class="btn btn-secondary btn-sm rounded-pill px-3 shadow-sm">
-                    <i class="fas fa-arrow-left me-1"></i> Kembali
-                </a>
+    <div class="card glass-card-dark border-0 rounded-4 p-3 mb-3">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+            <div class="d-flex align-items-center">
+                    <div class="rounded-3 me-3 d-flex align-items-center justify-content-center border border-primary border-opacity-50" style="width: 44px; height: 44px; background: rgba(37, 99, 235, .16);">
+                        <i class="fas fa-user text-primary fs-5"></i>
+                    </div>
+                <div>
+                    <h4 class="fw-bold mb-1 tracking-tight text-white">Detail Monitoring Berkas</h4>
+                    <p class="text-light opacity-50 small mb-0">ID Pengajuan: #{{ $submission->id }} • Sistem Manajemen Arsip</p>
+                </div>
             </div>
-            <h4 class="fw-bold m-0 text-dark">Detail Monitoring Berkas</h4>
-            <div>
-                <span class="badge rounded-pill {{ $submission->status == 'disetujui' ? 'bg-success' : ($submission->status == 'verified' ? 'bg-info' : 'bg-warning') }} px-3 py-2">
-                    {{ strtoupper($submission->status) }}
-                </span>
+            <div class="d-flex align-items-center gap-2">
+          <span class="badge rounded-pill border py-2 px-3 tracking-wider fw-bold x-small
+    {{ $submission->status == 'disetujui' ? 'bg-white text-success border-white' :
+       ($submission->status == 'proses verifikasi' || $submission->status == 'verified' ? 'bg-info bg-opacity-10 text-info border-info border-opacity-25' :
+       ($submission->status == 'proses validasi' ? 'bg-info bg-opacity-10 text-info border-info border-opacity-25' :
+       ($submission->status == 'reset' ? 'bg-danger bg-opacity-10 text-danger border-danger border-opacity-25' :
+       'bg-warning bg-opacity-10 text-warning border-warning border-opacity-25'))) }}">
+
+    <i class="fas {{ $submission->status == 'reset' ? 'fa-undo-alt' : 'fa-circle fa-fade' }} me-1 fa-xs"></i>
+
+    {{ $submission->status == 'disetujui' ? 'DISAHKAN' :
+
+       ($submission->status == 'proses validasi' ? 'VALIDASI' :
+       strtoupper($submission->status)) }}
+</span>
+                <a href="{{ route('admin.monitoring') }}" class="btn btn-outline-light btn-sm rounded-pill px-4">
+                    <i class="fas fa-arrow-left me-1.5"></i>Kembali
+                </a>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        {{-- Kolom Kiri: Informasi Utama --}}
-        <div class="col-lg-7">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="m-0 fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>Informasi Pengajuan</h5>
+    <div class="row g-4 align-items-stretch mb-4">
+
+        <div class="col-xl-7">
+            <div class="card glass-card-dark rounded-4 overflow-hidden h-100 d-flex flex-column">
+                <div class="card-header glass-header-dark d-flex justify-content-between align-items-center py-3 flex-shrink-0">
+                    <h6 class="mb-0 fw-bold text-white"><i class="fas fa-file-pdf me-2 text-danger fs-5"></i>Lampiran Dokumen</h6>
+                    <span class="badge bg-white text-danger border border-danger border-opacity-25 rounded-pill x-small fw-bold px-3 py-2">
+                        {{ $submission->documents->count() }} DOKUMEN
+                    </span>
                 </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted small uppercase">Nomor SPP/SPM</div>
-                        <div class="col-sm-8 fw-bold text-dark">{{ $submission->nomor_spp_spm }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted small uppercase">Instansi Pengirim</div>
-                        <div class="col-sm-8 text-dark">{{ $submission->department->nama_dinas }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-4 text-muted small uppercase">Total Pencairan</div>
-                        <div class="col-sm-8 fw-bold text-primary fs-5">Rp {{ number_format($submission->total_pencairan, 0, ',', '.') }}</div>
-                    </div>
-                    <div class="row mb-0">
-                        <div class="col-sm-4 text-muted small uppercase">Keterangan</div>
-                        <div class="col-sm-8 text-dark">{{ $submission->keterangan ?? '-' }}</div>
-                    </div>
-                </div>
-            </div>
 
-           {{-- Log Perjalanan Berkas Lengkap --}}
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3">
-                    <h5 class="m-0 fw-bold text-secondary"><i class="fas fa-history me-2"></i>Riwayat Perjalanan Berkas</h5>
-                </div>
-                <div class="card-body">
-                    <div class="timeline-small">
-                        
-                        {{-- 1. Tahap Input (Operator) --}}
-                        <div class="d-flex mb-3 position-relative">
-                            <div class="me-3 text-center" style="width: 50px;">
-                                <i class="fas fa-paper-plane text-primary"></i>
-                                <div class="vr mt-2 mb-2" style="height: 20px; opacity: 0.2;"></div>
-                            </div>
-                            <div>
-                                <div class="fw-bold small">Berkas Diajukan</div>
-                                <div class="text-muted extra-small">
-                                    Oleh: {{ $submission->user->name }} <br>
-                                    <i class="far fa-clock me-1"></i> {{ $submission->created_at->format('d M Y, H:i') }}
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- 2. Tahap Verifikasi (Kasie BUD) --}}
-                        @if($submission->verified_at)
-                        <div class="d-flex mb-3 position-relative">
-                            <div class="me-3 text-center" style="width: 50px;">
-                                <i class="fas fa-check-double text-info"></i>
-                                <div class="vr mt-2 mb-2" style="height: 20px; opacity: 0.2;"></div>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-info">Terverifikasi (Kasie BUD)</div>
-                                <div class="text-muted extra-small">
-                                    Verifikator: {{ $submission->verified_by_name ?? 'Sistem' }} <br>
-                                    <i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($submission->verified_at)->format('d M Y, H:i') }}
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
-                        {{-- 3. Tahap Validasi Akhir (Kabid Perbendaharaan) --}}
-                        @if($submission->validated_at)
-                        <div class="d-flex mb-3 position-relative">
-                            <div class="me-3 text-center" style="width: 50px;">
-                                <i class="fas fa-file-signature text-success"></i>
-                            </div>
-                            <div>
-                                <div class="fw-bold small text-success">Disahkan (Kabid Perbendaharaan)</div>
-                                <div class="text-muted extra-small">
-                                    Validator: {{ $submission->validated_by_name ?? 'Sistem' }} <br>
-                                    <i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($submission->validated_at)->format('d M Y, H:i') }}
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
-                        {{-- 4. Kondisi Khusus: REVISI / DITOLAK --}}
-                        @if($submission->status == 'revisi' || $submission->status == 'rejected')
-                        <div class="d-flex mb-3">
-                            <div class="me-3 text-center" style="width: 50px;">
-                                <i class="fas fa-exclamation-circle {{ $submission->status == 'revisi' ? 'text-warning' : 'text-danger' }}"></i>
-                            </div>
-                            <div class="p-2 rounded {{ $submission->status == 'revisi' ? 'bg-warning-soft' : 'bg-danger-soft' }} border w-100">
-                                <div class="fw-bold small {{ $submission->status == 'revisi' ? 'text-warning' : 'text-danger' }}">
-                                    {{ $submission->status == 'revisi' ? 'Perlu Revisi' : 'Pengajuan Ditolak' }}
-                                </div>
-                                @if($submission->catatan || $submission->catatan_kabid)
-                                    <div class="text-dark extra-small mt-1 italic">
-                                        "{{ $submission->catatan ?? $submission->catatan_kabid }}"
-                                    </div>
-                                @endif
-                                <div class="text-muted extra-small mt-1">
-                                    <i class="far fa-clock me-1"></i> {{ $submission->updated_at->format('d M Y, H:i') }}
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
-                        {{-- 5. Kondisi Khusus: RESET (Oleh Admin) --}}
-                        @if($submission->status == 'reset')
-                        <div class="d-flex mb-3">
-                            <div class="me-3 text-center" style="width: 50px;">
-                                <i class="fas fa-undo-alt text-secondary"></i>
-                            </div>
-                            <div class="p-2 rounded bg-light border w-100">
-                                <div class="fw-bold small text-secondary">Status Direset oleh Admin</div>
-                                <div class="text-muted extra-small">Berkas dikembalikan ke antrean awal.</div>
-                                <div class="text-muted extra-small mt-1">
-                                    <i class="far fa-clock me-1"></i> {{ $submission->updated_at->format('d M Y, H:i') }}
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Kolom Kanan: Daftar Dokumen & Aksi --}}
-        <div class="col-lg-5">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="m-0 fw-bold text-danger"><i class="fas fa-file-pdf me-2"></i>Lampiran Dokumen</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
+                <div class="card-body p-0 flex-grow-1 overflow-auto" style="max-height: 380px;">
+                    <div class="list-group list-group-flush bg-transparent">
                         @forelse($submission->documents as $doc)
-                            <a href="javascript:void(0)" 
-                               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3"
-                               onclick="viewDocument('{{ asset('storage/' . $doc->file_path) }}', '{{ strtoupper($doc->jenis_dokumen) }}')">
-                                <div>
-                                    <div class="fw-bold mb-0 small text-dark">{{ strtoupper($doc->jenis_dokumen) }}</div>
-                                    <span class="extra-small text-muted"><i class="fas fa-clock me-1"></i> {{ $doc->created_at->diffForHumans() }}</span>
+                            <div class="bg-transparent d-flex justify-content-between align-items-center py-3 px-4 transition-all hover-glow {{ !$loop->last ? 'border-bottom border-white border-opacity-10' : '' }}">
+                                <div class="d-flex align-items-center me-2 overflow-hidden">
+                                    <div class="file-icon bg-danger p-2 rounded-3 me-3 text-white flex-shrink-0">
+                                        <i class="far fa-file-pdf fs-5 text-white"></i>
+                                    </div>
+                                    <div class="text-truncate">
+                                        <div class="fw-bold mb-0 small text-light text-truncate">{{ strtoupper($doc->jenis_dokumen) }}</div>
+                                        <small class="extra-small text-white opacity-40"> {{ $doc->updated_at->timezone('Asia/Makassar')->format('d M Y, H:i') }} {{ $doc->updated_at->timezone('Asia/Makassar')->offsetHours == 7 ? 'WIB' : ($doc->updated_at->timezone('Asia/Makassar')->offsetHours == 8 ? 'WITA' : 'WIT') }}</small>
+                                    </div>
                                 </div>
-                                <span class="btn btn-sm btn-light border rounded-pill px-3">
-                                    <i class="fas fa-eye me-1 text-primary"></i> Preview
-                                </span>
-                            </a>
+                                    <button type="button"
+                                            class="btn btn-glass-primary btn-sm rounded-pill px-3 fw-bold shadow-sm"
+                                            data-url="{{ asset('storage/' . $doc->file_path) }}"
+                                            data-title="{{ strtoupper(str_replace('_', ' ', $doc->jenis_dokumen)) }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalPreview">
+                                            <i class="fas fa-eye me-2"></i> Lihat
+                                    </button>
+                            </div>
                         @empty
-                            <div class="p-4 text-center text-muted small italic">Tidak ada dokumen dilampirkan.</div>
+                            <div class="p-5 text-center text-white opacity-40 small fst-italic h-100 d-flex flex-column align-items-center justify-content-center">
+                                <i class="fas fa-folder-open d-block fs-2 mb-2 opacity-50 text-danger"></i>Tidak ada dokumen dilampirkan.
+                            </div>
                         @endforelse
                     </div>
                 </div>
             </div>
+        </div>
 
-            {{-- Panel Aksi --}}
-            <div class="card border-0 shadow-sm bg-dark text-white">
-                <div class="card-body p-4 text-center">
-                    <h6 class="mb-3">Panel Kontrol Super Admin</h6>
-                    <form action="{{ route('admin.submissions.reset', $submission->id) }}" method="POST" data-confirm-delete="Reset status berkas <strong>{{ $submission->nomor_spp_spm }}</strong> ke Pending? Semua proses verifikasi akan direset.">
-                        @csrf
-                        <button type="submit" class="btn btn-warning w-100 fw-bold shadow-sm mb-3">
-                            <i class="fas fa-undo me-1"></i> Reset Status ke Pending
-                        </button>
-                    </form>
-                    <p class="extra-small text-light-50 m-0">Gunakan tombol reset jika terdapat kesalahan verifikasi atau data perlu diperbaiki oleh OPD.</p>
+        <div class="col-xl-5">
+            <div class="card glass-card-dark border-0 rounded-4 overflow-hidden h-100 d-flex flex-column">
+                <div class="card-header glass-header-dark border-0 py-3 flex-shrink-0">
+                    <h6 class="mb-0 fw-bold text-white"><i class="fas fa-info-circle me-2 text-primary"></i>Detail Pengajuan</h6>
+                </div>
+
+                <div class="card-body flex-grow-1 p-3 p-lg-4">
+                    <div class="mb-3 p-3 rounded-4" style="background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);">
+                        <label class="text-uppercase text-primary fw-bold mb-1 d-block tracking-wider" style="font-size: 0.65rem;">Instansi Pengaju</label>
+                        <div class="fw-bold text-white">{{ $submission->department->nama_dinas ?? '-' }}</div>
+                    </div>
+
+                    <section class="info-section mb-2">
+                        <div class="info-section-title text-light"><i class="fas fa-file-alt me-2"></i>Data Pengajuan</div>
+                        <div class="info-row">
+                            <span class="info-label">Jenis Pencairan</span>
+                            <span class="info-value"><span class="jenis-badge">{{ strtoupper($submission->jenis_pencairan ?? '-') }}</span></span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Nomor SPP/SPM</span>
+                            <span class="info-value">{{ $submission->nomor_spp ?? '-' }} / {{ $submission->nomor_spm ?? '-' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Tanggal Berkas</span>
+                            <span class="info-value">{{ $submission->tanggal ? \Carbon\Carbon::parse($submission->tanggal)->translatedFormat('d F Y') : '-' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Tanggal Pengajuan</span>
+                            <span class="info-value">{{ $submission->created_at?->translatedFormat('d F Y, H:i') ?? '-' }}</span>
+                        </div>
+                    </section>
+
+                    <section class="info-section mb-2">
+                        <div class="info-section-title text-light"><i class="fas fa-tasks me-2"></i>Informasi Kegiatan</div>
+                        <div class="info-row">
+                            <span class="info-label">Kegiatan</span>
+                            <span class="info-value">{{ $submission->judul_kegiatan ?? '-' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Sub Kegiatan</span>
+                            <span class="info-value">{{ $submission->judul_sub_kegiatan ?? '-' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Perihal</span>
+                            <span class="info-value">{{ $submission->perihal ?? '-' }}</span>
+                        </div>
+                    </section>
+
+                    <section class="info-section mb-0">
+                        <div class="info-section-title text-light"><i class="fas fa-money-bill-wave me-2"></i>Informasi Keuangan</div>
+                        <div class="info-row">
+                            <span class="info-label">Sumber Dana</span>
+                            <span class="info-value">{{ $submission->sumber_dana ?? '-' }}</span>
+                        </div>
+                        <div class="info-total">
+                            <div><span class="info-total-label">Total Permintaan</span><small>Nilai pengajuan</small></div>
+                            <strong>Rp {{ number_format($submission->total_pencairan ?? 0, 0, ',', '.') }}</strong>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-{{-- MODAL PREVIEW DOKUMEN --}}
-<div class="modal fade" id="modalPreview" tabindex="-1" aria-labelledby="modalPreviewLabel" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                <h5 class="modal-title fw-bold text-dark flex-grow-1" id="modalPreviewLabel">Preview Dokumen</h5>
-                <div class="d-flex align-items-center gap-2">
-                    <a href="" id="btnDownload" target="_blank" class="btn btn-danger btn-sm px-3">
-                        <i class="fas fa-download me-1"></i> Download
-                    </a>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+    <div class="row g-4">
+
+    <div class="col-xl-7">
+        <div class="card glass-card-dark border-0 rounded-4 overflow-hidden h-100">
+            <div class="card-header glass-header-dark border-0 py-3">
+                <h6 class="mb-0 fw-bold text-white"><i class="fas fa-history me-2 text-warning"></i>Riwayat Pengajuan</h6>
             </div>
-            <div class="modal-body p-0 bg-light position-relative">
-                {{-- Enhanced Loading Spinner with Progress --}}
-                <div id="loadingSpinner" class="position-absolute top-50 start-50 translate-middle d-flex flex-column align-items-center justify-content-center w-100 h-100 bg-white" style="z-index: 10;">
-                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-muted fw-semibold mb-2">Memuat dokumen...</p>
-                        <small class="text-muted" id="loadingText">Mohon tunggu sebentar</small>
-                    </div>
-                    <div class="mt-3">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="cancelLoading()">
-                            <i class="fas fa-times me-1"></i> Batal
-                        </button>
-                    </div>
-                </div>
+            <div class="card-body p-4">
+                @php
+                    $timelineEvents = [
+                        [
+                            'at' => $submission->created_at,
+                            'title' => 'Berkas Diajukan',
+                            'actor' => $submission->user->name ?? 'System',
+                            'marker' => 'bg-info',
+                            'icon' => 'fas fa-plus',
+                            'icon_color' => 'text-dark',
+                            'title_color' => 'text-white',
+                        ],
+                        [
+                            'at' => $submission->revisi_at,
+                            'title' => 'Dikembalikan',
+                            'actor' => $submission->penolak->name ?? 'Sistem / Verifikator',
+                            'marker' => 'bg-dark',
+                            'icon' => 'fas fa-exclamation-triangle',
+                            'icon_color' => 'text-danger',
+                            'title_color' => 'text-light opacity-75',
+                        ],
+                        [
+                            'at' => $submission->revised_at,
+                            'title' => 'Direvisi',
+                            'actor' => $submission->user->name ?? 'Sistem',
+                            'marker' => 'bg-warning',
+                            'icon' => 'fas fa-file-pen',
+                            'icon_color' => 'text-dark',
+                            'title_color' => 'text-warning tracking-wider text-uppercase',
+                        ],
+                        [
+                            'at' => $submission->verified_at,
+                            'title' => 'DIVERIFIKASI',
+                            'actor' => $submission->verified_by_name,
+                            'marker' => 'bg-success',
+                            'icon' => 'fas fa-check',
+                            'icon_color' => 'text-white',
+                            'title_color' => 'text-light',
+                        ],
+                        [
+                            'at' => $submission->validated_at,
+                            'title' => 'Disahkan',
+                            'actor' => $submission->validated_by_name,
+                            'marker' => 'bg-primary',
+                            'icon' => 'fas fa-file-signature',
+                            'icon_color' => 'text-white',
+                            'title_color' => 'text-white tracking-wider text-uppercase',
+                        ],
+                        [
+                            'at' => $submission->rejected_at,
+                            'title' => 'Ditolak',
+                            'actor' => $submission->penolakKabid->name ?? 'Sistem',
+                            'marker' => 'bg-danger',
+                            'icon' => 'fas fa-times',
+                            'icon_color' => 'text-white',
+                            'title_color' => 'text-danger tracking-wider text-uppercase',
+                            'note' => $submission->catatan_kabid,
+                        ],
+                        [
+                            'at' => $submission->reset_at,
+                            'title' => 'Direset Sistem',
+                            'marker' => 'bg-dark',
+                            'icon' => 'fas fa-undo',
+                            'icon_color' => 'text-danger',
+                            'title_color' => 'text-white-50',
+                            'description' => 'Status dikembalikan paksa ke antrean awal.',
+                        ],
+                    ];
+                    $timelineEvents = array_values(array_filter($timelineEvents, fn ($event) => $event['at'] !== null));
+                    usort($timelineEvents, fn ($left, $right) => $left['at']->getTimestamp() <=> $right['at']->getTimestamp());
+                @endphp
 
-                {{-- Error State --}}
-                <div id="errorState" class="position-absolute top-50 start-50 translate-middle d-flex flex-column align-items-center justify-content-center w-100 h-100 bg-white d-none" style="z-index: 10;">
-                    <div class="text-center">
-                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
-                        <h6 class="text-muted mb-2">Gagal Memuat Dokumen</h6>
-                        <p class="text-muted small mb-3" id="errorMessage">Dokumen tidak dapat dimuat. Silakan coba lagi atau download file.</p>
-                        <div>
-                            <button type="button" class="btn btn-primary btn-sm me-2" onclick="retryLoading()">
-                                <i class="fas fa-redo me-1"></i> Coba Lagi
-                            </button>
-                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-                                <i class="fas fa-times me-1"></i> Tutup
-                            </button>
+                <div class="simple-timeline position-relative">
+
+                    <div class="timeline-line" style="position: absolute; left: 11px; top: 10px; bottom: 10px; width: 2px; background: rgba(255,255,255,0.08); z-index: 1;"></div>
+
+                    @foreach($timelineEvents as $event)
+                    <div class="position-relative z-2 {{ $loop->last ? '' : 'mb-4' }}">
+                        <div class="d-flex align-items-start">
+                            <div class="rounded-circle {{ $event['marker'] }} d-flex align-items-center justify-content-center shadow-sm border border-2 border-dark" style="width: 24px; height: 24px; min-width: 24px;">
+                                <i class="{{ $event['icon'] }} {{ $event['icon_color'] }}" style="font-size: 0.55rem;"></i>
+                            </div>
+                            <div class="ms-3 flex-grow-1">
+                                <div class="mb-1 d-flex align-items-center flex-wrap gap-2">
+                                    <h6 class="mb-0 fw-bold {{ $event['title_color'] }} small">{{ $event['title'] }}</h6>
+                                    <small class="text-light opacity-50" style="font-size: 0.65rem;">
+                                        {{ $event['at']->timezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                                    </small>
+                                </div>
+                            @if(!empty($event['actor']))
+                                <p class="text-light opacity-50 mb-{{ !empty($event['note']) ? '1' : '0' }} x-small">Oleh: <span class="fw-semibold text-white">{{ $event['actor'] }}</span></p>
+                            @endif
+                            @if(!empty($event['description']))
+                                <p class="text-light opacity-50 mb-0 x-small">{{ $event['description'] }}</p>
+                            @endif
+                            @if(!empty($event['note']))
+                                <div class="border border-danger text-light rounded-3 p-2 mt-1 extra-small">
+                                    <strong class="text-danger">Catatan:</strong> {{ $event['note'] }}
+                                </div>
+                            @endif
+                            </div>
                         </div>
                     </div>
+                    @endforeach
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="card glass-header-dark border-0 rounded-4 overflow-hidden shadow-lg position-relative h-100">
+            <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                <i class="fas fa-user-shield fa-5x text-danger"></i>
+            </div>
+            <div class="card-body p-4 text-center d-flex flex-column justify-content-center align-items-center position-relative" style="z-index: 2; min-height: 240px;">
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1.5 x-small fw-bold tracking-wider mb-2">
+                    Otoritas Super Admin
+                </span>
+                <h6 class="fw-bold text-white mb-2" style="font-size: 0.95rem;">PANEL KONTROL DESTRUKTIF</h6>
+                <p class="extra-small text-white opacity-50 mb-4 mx-auto style-lh" style="max-width: 90%;">Gunakan tombol berikut untuk membatalkan semua verifikasi dan mengembalikan berkas ke antrean awal jika terdapat kekeliruan struktural.</p>
+
+                <form action="{{ route('monitoring.reset', $submission->id) }}" method="POST" class="w-100" data-confirm-delete="Reset status berkas <strong>{{ $submission->nomor_spp_spm ?? $submission->nomor_spp }}</strong> ke Pending? Semua proses verifikasi sebelumnya akan dihapus permanen.">
+                    @csrf
+                    <button type="submit" class="btn btn-danger rounded-pill w-100 fw-bold py-2 shadow-sm shadow-glow-danger transition-all hover-glow-danger">
+                        <i class="fas fa-undo-alt me-1.5"></i> Reset Pengajuan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+{{-- Modal: Pratinjau dokumen pengajuan --}}
+<div class="modal fade" id="modalPreview" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 95vw;">
+        <div class="modal-content border-white border-opacity-10 bg-dark shadow-lg rounded-4 overflow-hidden text-white" style="background: rgba(20, 24, 33, 0.98) !important; backdrop-filter: blur(10px); height: 90vh;">
+            <div class="modal-body p-0 d-flex flex-column flex-lg-row h-100">
+
+                <div class="flex-grow-1 bg-black bg-opacity-40 position-relative h-100">
+                    <div id="loader" class="position-absolute top-50 start-50 translate-middle text-center">
+                        <div class="spinner-border text-primary border-3"></div>
+                    </div>
+                    <iframe id="pdfFrame" src="" frameborder="0" style="width: 100%; height: 100%; display: none;"></iframe>
                 </div>
 
-                <iframe id="iframePreview" src="" width="100%" height="700px" style="border: none; display: none;" class="bg-white" loading="lazy"></iframe>
-            </div>
-            <div class="modal-footer bg-white border-top">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> Tutup
-                </button>
+                <div class="p-3 d-flex flex-column border-start border-white border-opacity-10 bg-dark bg-opacity-5 shadow-sm h-100" style="width: 280px; min-width: 280px; overflow-y: auto;">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="fw-black text-white text-uppercase my-2 tracking-tight text-truncate" id="docTitle" style="font-size: 0.85rem;">PRATINJAU</h6>
+                        <button type="button" class="btn-close btn-close-white p-1" style="font-size: 0.75rem;" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <hr class="border-white border-opacity-50 my-1.5">
+
+                    <div class="mb-3 d-flex flex-column gap-2">
+                        <div>
+                            <label class="text-white-50 text-uppercase tracking-wider fw-semibold mb-0" style="font-size: 0.6rem;">Nomor SPP / SPM</label>
+                            <div class="fw-bold text-white text-break" style="font-size: 0.75rem;">{{ $submission->nomor_spp ?? '-' }} / {{ $submission->nomor_spm  ?? '-' }}</div>
+                        </div>
+                        <div>
+                            <label class="text-white-50 text-uppercase tracking-wider fw-semibold mb-0" style="font-size: 0.6rem;">Kegiatan</label>
+                            <div class="text-white text-break" style="line-height: 1.2; font-size: 0.75rem;">{{ $submission->judul_kegiatan ?? '-' }}</div>
+                        </div>
+                        <div>
+                            <label class="text-white-50 text-uppercase tracking-wider fw-semibold mb-0" style="font-size: 0.6rem;">Sub Kegiatan</label>
+                            <div class="text-white text-break" style="line-height: 1.2; font-size: 0.75rem;">{{ $submission->judul_sub_kegiatan ?? '-' }}</div>
+                        </div>
+                        <div>
+                            <label class="text-white-50 text-uppercase tracking-wider fw-semibold mb-0" style="font-size: 0.6rem;">Perihal</label>
+                            <div class="text-white-50 text-break" style="line-height: 1.2; font-size: 0.75rem;">{{ $submission->perihal ?? '-' }}</div>
+                        </div>
+
+                        <div class="p-2 rounded-3 mt-1" style="background: rgba(34, 197, 94, 0.06); border: 1px solid rgba(34, 197, 94, 0.12);">
+                            <label class="text-success text-uppercase tracking-wider fw-bold mb-0" style="font-size: 0.55rem; letter-spacing: 0.5px;">Total Nilai Pencairan</label>
+                            <div class="fw-black text-white tracking-tight" style="font-size: 1.1rem;">
+                                Rp {{ number_format($submission->total_pencairan ?? 0, 0, ',', '.') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-primary bg-primary bg-opacity-5 border-0 text-white-50 rounded-3 mb-3 p-2" style="line-height: 1.3; font-size: 0.68rem;">
+                        <i class="fas fa-info-circle me-1 text-light"></i> Verifikasi kecocokan tanda tangan, stempel, serta nominal dengan sistem.
+                    </div>
+
+                    <div class="mt-auto gap-1.5 d-grid pt-2">
+                        <a id="btnDownload" href="" download class="btn btn-glass-action rounded-pill fw-bold btn-xs p-2 text-light mb-3 " style="font-size: 0.75rem;">
+                            <i class="fas fa-download me-2 text-primary"></i>Unduh Berkas
+                        </a>
+                        <button class="btn btn-primary rounded-pill fw-bold btn-xs p-2" style="font-size: 0.75rem;" data-bs-dismiss="modal">Selesai Membaca</button>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    .extra-small { font-size: 0.75rem; }
-    .uppercase { text-transform: uppercase; letter-spacing: 0.5px; }
-    .timeline-small { border-left: 2px solid #e9ecef; margin-left: 24px; padding-left: 10px; }
-    .modal-xl { max-width: 90%; }
-</style>
-
 <script>
+document.addEventListener('DOMContentLoaded', function () {
     let loadingTimeout;
-    let currentUrl = '';
-    let currentTitle = '';
 
-    function viewDocument(url, title) {
-        const modal = new bootstrap.Modal(document.getElementById('modalPreview'));
-        const iframe = document.getElementById('iframePreview');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const errorState = document.getElementById('errorState');
-        const downloadBtn = document.getElementById('btnDownload');
-        const loadingText = document.getElementById('loadingText');
+    const modalElement = document.getElementById('modalPreview');
+    const iframe = document.getElementById('pdfFrame');
+    const loader = document.getElementById('loader');
+    const downloadBtn = document.getElementById('btnDownload');
+    const docTitle = document.getElementById('docTitle');
 
-        // Store current values
-        currentUrl = url;
-        currentTitle = title;
+    if (modalElement) {
+        modalElement.addEventListener('show.bs.modal', function (event) {
+            const targetBtn = event.relatedTarget;
 
-        // Reset states
-        iframe.style.display = 'none';
+            if (targetBtn) {
+                const currentUrl = targetBtn.getAttribute('data-url');
+                const currentTitle = targetBtn.getAttribute('data-title');
+
+                if (docTitle) docTitle.innerText = titleCase(currentTitle);
+                if (downloadBtn) downloadBtn.href = currentUrl;
+
+                iframe.style.display = 'none';
+                loader.style.display = 'block';
+
+                initiatePreview(currentUrl);
+            }
+        });
+
+        modalElement.addEventListener('hidden.bs.modal', resetModalState);
+    }
+
+    // Function: Membuka pratinjau dokumen pengajuan
+    function initiatePreview(url) {
+        if (loadingTimeout) clearTimeout(loadingTimeout);
+
         iframe.src = '';
-        loadingSpinner.style.display = 'flex';
-        errorState.classList.add('d-none');
-        document.getElementById('modalPreviewLabel').innerText = title;
-        downloadBtn.href = url;
-        loadingText.innerText = 'Memuat dokumen PDF...';
 
-        // Clear any existing timeout
-        if (loadingTimeout) {
-            clearTimeout(loadingTimeout);
-        }
-
-        const cacheBustedUrl = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
-        iframe.src = cacheBustedUrl;
-        modal.show();
+        iframe.src = url;
 
         loadingTimeout = setTimeout(() => {
-            showError('Waktu loading terlalu lama. File PDF mungkin terlalu besar atau koneksi lambat. Coba download file langsung.');
-        }, 45000);
-
-        let progressStep = 0;
-        const progressInterval = setInterval(() => {
-            progressStep = Math.min(progressStep + 5, 95);
-            loadingText.innerText = `Memuat dokumen PDF... ${progressStep}%`;
-            if (progressStep === 95) {
-                clearInterval(progressInterval);
-            }
-        }, 1500);
-
-        iframe.onload = function() {
-            clearTimeout(loadingTimeout);
-            clearInterval(progressInterval);
-            loadingSpinner.style.display = 'none';
-            errorState.classList.add('d-none');
+            loader.style.display = 'none';
             iframe.style.display = 'block';
-            loadingText.innerText = 'Dokumen siap ditampilkan';
-        };
-
-        iframe.onerror = function() {
-            clearTimeout(loadingTimeout);
-            clearInterval(progressInterval);
-            showError('Gagal memuat dokumen PDF. File mungkin rusak, terlalu besar, atau tidak tersedia. Silakan coba download.');
-        };
+        }, 600);
     }
 
-    function cancelLoading() {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalPreview'));
-        if (modal) {
-            modal.hide();
-        }
-        if (loadingTimeout) {
-            clearTimeout(loadingTimeout);
-        }
-        resetModalState();
-    }
-
-    function retryLoading() {
-        if (currentUrl && currentTitle) {
-            viewDocument(currentUrl, currentTitle);
-        }
-    }
-
-    function showError(message) {
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const errorState = document.getElementById('errorState');
-        const errorMessage = document.getElementById('errorMessage');
-
-        loadingSpinner.style.display = 'none';
-        errorState.classList.remove('d-none');
-        errorMessage.innerText = message;
-    }
-
+    // Function: Mengatur ulang keadaan modal pratinjau
     function resetModalState() {
-        const iframe = document.getElementById('iframePreview');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const errorState = document.getElementById('errorState');
-        const loadingText = document.getElementById('loadingText');
-
+        if (loadingTimeout) clearTimeout(loadingTimeout);
         iframe.style.display = 'none';
         iframe.src = '';
-        loadingSpinner.style.display = 'none';
-        errorState.classList.add('d-none');
-        loadingText.innerText = 'Mohon tunggu sebentar';
-
-        if (loadingTimeout) {
-            clearTimeout(loadingTimeout);
-        }
+        loader.style.display = 'none';
     }
 
-    // Reset modal state when modal is hidden
-    document.getElementById('modalPreview').addEventListener('hidden.bs.modal', function () {
-        resetModalState();
-    });
+    // Function: Mengubah teks menjadi format title case
+    function titleCase(str) {
+        return str ? str.toUpperCase() : 'PRATINJAU DOKUMEN';
+    }
+});
 </script>
 @endsection

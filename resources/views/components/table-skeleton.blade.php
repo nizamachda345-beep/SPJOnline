@@ -1,4 +1,4 @@
-{{-- Skeleton Loading Component for Tables --}}
+{{-- View: components/table-skeleton --}}
 <div class="table-responsive">
     <table class="table table-hover align-middle skeleton-table mb-0">
         <thead class="table-light">

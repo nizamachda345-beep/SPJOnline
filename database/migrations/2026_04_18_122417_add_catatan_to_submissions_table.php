@@ -12,7 +12,6 @@ return new class extends Migration
    public function up()
 {
     Schema::table('submissions', function (Blueprint $table) {
-        // Kita letakkan setelah kolom status, bersifat nullable (boleh kosong)
         $table->text('catatan')->nullable()->after('status');
     });
 }

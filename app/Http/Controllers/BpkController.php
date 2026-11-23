@@ -2,84 +2,173 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Submission; // Tetap pakai model yang sama, tapi akses terbatas
+use App\Models\Submission;
 use App\Models\Department;
 
 class BpkController extends Controller
 {
-    // Halaman Daftar Audit
-    public function index(Request $request)
-    {
-        $query = Submission::with('department');
 
-        // Filter Tahun Anggaran
-        $tahun = $request->get('tahun', date('Y'));
-        $query->whereYear('tanggal', $tahun);
+   // Method: index
+   public function index(Request $request)
+{
+    $query = Submission::with(['department', 'documents'])
+        ->where(function ($submission) {
+            $submission->whereIn('status', ['disetujui', 'approved'])
+                ->orWhereHas('documents', function ($document) {
+                    $document->where('jenis_dokumen', 'LIKE', '%SP2D%')
+                        ->whereIn('status_dokumen', ['verified', 'approved']);
+                });
+        });
 
-        // Filter Akumulatif (Hanya muncul jika diisi)
-        if ($request->filled('tanggal')) $query->whereDate('tanggal', $request->tanggal);
-        if ($request->filled('nomor')) $query->where('nomor_spp_spm', 'like', '%' . $request->nomor . '%');
-        if ($request->filled('dinas')) $query->where('department_id', $request->dinas);
-        if ($request->filled('min_nominal')) $query->where('total_pencairan', '=', $request->min_nominal);
+    $tahun = $request->get('tahun', date('Y'));
+    $query->whereYear('tanggal', $tahun);
 
-        // Di dalam BpkController@index
+    if ($request->filled('tanggal')) $query->whereDate('tanggal', $request->tanggal);
 
-        // Ambil parameter dari URL
-        $sortField = $request->get('sort'); 
-        $order = $request->get('order', 'desc'); // Default urutan menurun (terbaru/terbesar)
-
-        if ($sortField == 'nominal') {
-            $query->orderBy('total_pencairan', $order);
-        } 
-        elseif ($sortField == 'dinas') {
-            $query->join('departments', 'submissions.department_id', '=', 'departments.id')
-                ->select('submissions.*')
-                ->orderBy('departments.nama_dinas', $order);
-        } 
-        elseif ($sortField == 'nomor') {
-            $query->orderBy('nomor_spp_spm', $order);
-        } 
-        elseif ($sortField == 'tanggal' || $sortField == 'created_at') {
-            $query->orderBy('created_at', $order);
-        } 
-        elseif ($sortField == 'status') {
-            $query->orderBy('status', $order);
-        } 
-        else {
-            // Default: Data yang paling baru diinput sistem muncul paling atas
-            $query->orderBy('created_at', 'desc');
-        }
-
-        $submissions = $query->get();
-        $departments = Department::all();
-
-        return view('bpk.monitoring', compact('submissions', 'departments'));
+    if ($request->filled('nomor')) {
+        $nomor = $request->nomor;
+        $query->where(function($q) use ($nomor) {
+            $q->where('nomor_spp', 'like', '%' . $nomor . '%')
+              ->orWhere('nomor_spm', 'like', '%' . $nomor . '%');
+        });
     }
 
-    // Halaman Detail Audit
-    public function show($id)
-    {
-        // BPK hanya boleh melihat data yang sudah tervalidasi/masuk tahap audit
-        $submission = Submission::with(['department', 'documents'])->findOrFail($id);
-        return view('bpk.show', compact('submission'));
+    if ($request->filled('dinas')) $query->where('department_id', $request->dinas);
+    if ($request->filled('min_nominal')) $query->where('total_pencairan', '=', $request->min_nominal);
+
+    $sortField = $request->get('sort');
+    $order = $request->get('order', 'desc');
+
+    if ($sortField == 'nominal') {
+        $query->orderBy('total_pencairan', $order);
+    }
+    elseif ($sortField == 'dinas') {
+        $query->join('departments', 'submissions.department_id', '=', 'departments.id')
+            ->select('submissions.*')
+            ->orderBy('departments.nama_dinas', $order);
+    }
+    elseif ($sortField == 'nomor') {
+        $query->orderBy('nomor_spm', $order)
+              ->orderBy('nomor_spp', $order);
+    }
+    elseif ($sortField == 'tanggal' || $sortField == 'created_at') {
+        $query->orderBy('created_at', $order);
+    }
+    elseif ($sortField == 'status') {
+        $query->orderBy('status', $order);
+    }
+    else {
+        $query->orderBy('created_at', 'desc');
     }
 
-    public function dashboard()
+    $submissions = $query->paginate(10)->withQueryString();
+
+    $departments = Department::all();
+
+    return view('bpk.monitoring', compact('submissions', 'departments'));
+}
+
+// Method: show
+public function show($id)
+{
+    $submission = Submission::with(['department', 'documents'])->findOrFail($id);
+
+    $previous = Submission::where('id', '<', $id)
+        ->where(function ($eligible) {
+            $eligible->whereIn('status', ['disetujui', 'approved'])
+                ->orWhereHas('documents', function ($document) {
+                    $document->where('jenis_dokumen', 'LIKE', '%SP2D%')
+                        ->whereIn('status_dokumen', ['verified', 'approved']);
+                });
+        })
+        ->orderBy('id', 'desc')
+        ->first();
+
+    $next = Submission::where('id', '>', $id)
+        ->where(function ($eligible) {
+            $eligible->whereIn('status', ['disetujui', 'approved'])
+                ->orWhereHas('documents', function ($document) {
+                    $document->where('jenis_dokumen', 'LIKE', '%SP2D%')
+                        ->whereIn('status_dokumen', ['verified', 'approved']);
+                });
+        })
+        ->orderBy('id', 'asc')
+        ->first();
+
+    return view('bpk.show', compact('submission', 'previous', 'next'));
+}
+
+// Method: dashboard
+public function dashboard()
+{
+    $statusCounts = Submission::select('status', \DB::raw('count(*) as total'))
+        ->groupBy('status')
+        ->pluck('total', 'status');
+
+    $totalStats = Submission::selectRaw('count(*) as total_berkas, sum(total_pencairan) as total_nilai')->first();
+
+    $stats = [
+        'total_berkas'    => $totalStats->total_berkas,
+        'total_nilai'     => $totalStats->total_nilai,
+        'pending'         => $statusCounts->get('pending', 0),
+        'proses_validasi' => $statusCounts->get('proses validasi', 0),
+        'disetujui'       => $statusCounts->get('disetujui', 0),
+        'ditolak'         => $statusCounts->get('ditolak', 0),
+        'revisi'          => $statusCounts->get('revisi', 0),
+        'direvisi'        => $statusCounts->get('direvisi', 0),
+        'rejected'        => $statusCounts->get('rejected', 0),
+        'reset'           => $statusCounts->get('reset', 0),
+        'verified'        => $statusCounts->get('verified', 0),
+    ];
+
+    $sp2dBelumUploadQuery = Submission::query()
+        ->whereIn('status', ['disetujui', 'verified'])
+        ->whereRaw("UPPER(TRIM(COALESCE(jenis_pencairan, ''))) <> ?", ['GU NIHIL'])
+        ->whereDoesntHave('documents', function ($document) {
+            $document->where('jenis_dokumen', 'LIKE', '%SP2D%');
+        });
+
+    $stats['sp2d_belum_upload'] = (clone $sp2dBelumUploadQuery)->count();
+
+    $sp2dBelumUpload = (clone $sp2dBelumUploadQuery)
+        ->with('department')
+        ->latest('updated_at')
+        ->paginate(10, ['*'], 'sp2d_page')
+        ->withQueryString();
+
+    $recentSubmissions = Submission::with(['department', 'user', 'documents'])
+        ->where(function ($submission) {
+            $submission->whereIn('status', ['disetujui', 'approved'])
+                ->orWhereHas('documents', function ($document) {
+                    $document->where('jenis_dokumen', 'LIKE', '%SP2D%')
+                        ->whereIn('status_dokumen', ['verified', 'approved']);
+                });
+        })
+        ->latest()
+        ->take(10)
+        ->get();
+
+    return view('bpk.dashboard', compact('stats', 'recentSubmissions', 'sp2dBelumUpload'));
+}
+
+// Method: submitAudit
+public function submitAudit(Request $request, $id)
     {
-        // BPK bisa melihat seluruh data (Audit Digital)
-        $query = Submission::query();
+        $request->validate([
+            'status_audit' => 'required|in:sesuai,dengan_catatan',
+            'catatan_audit' => 'required_if:status_audit,dengan_catatan|nullable|string|max:1000'
+        ], [
+            'catatan_audit.required_if' => 'Catatan temuan wajib diisi jika Anda memilih status Dengan Catatan.'
+        ]);
 
-        $stats = [
-            'total_berkas'    => (clone $query)->count(),
-            'total_nilai'     => (clone $query)->sum('total_pencairan'), // Tambahan khusus BPK
-            'pending'         => (clone $query)->where('status', 'pending')->count(),
-            'proses_validasi' => (clone $query)->where('status', 'proses validasi')->count(),
-            'disetujui'       => (clone $query)->where('status', 'disetujui')->count(),
-            'ditolak'         => (clone $query)->where('status', 'revisi')->count(), // Revisi = Perlu Atensi
-        ];
+        $submission = Submission::findOrFail($id);
 
-        $recentSubmissions = $query->with(['department', 'user'])->latest()->take(10)->get();
+        $submission->status_audit = $request->status_audit;
 
-        return view('bpk.dashboard', compact('stats', 'recentSubmissions'));
+        $submission->catatan_audit = ($request->status_audit === 'sesuai') ? null : $request->catatan_audit;
+
+        $submission->save();
+
+        return redirect()->back()->with('success', 'Hasil keputusan audit pengajuan berhasil disimpan!');
     }
 }
