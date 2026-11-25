@@ -37,14 +37,6 @@ Route::middleware([
         return Storage::disk('public')->response($path);
     })->where('path', '.*');
 
-    Route::get('/cek-path', function () {
-    return response()->json([
-        'base_path'           => base_path(),
-        'storage_public_path' => storage_path('app/public'),
-        'is_writable'         => is_writable(storage_path('app/public')),
-    ]);
-});
-
     Route::post('/access-mode', [AccessModeController::class, 'update'])->name('access-mode.update');
 
     Route::post('/activity/presence', fn () => response()->json(['ok' => true]))
