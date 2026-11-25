@@ -324,7 +324,7 @@
     type="button"
     class="btn btn-document-preview btn-glass-primary btn-sm rounded-pill px-3 fw-bold shadow-sm"
     onclick="openPdfModal(
-        '{{ route('dokumen.file', $doc->id) }}',
+        '{{ url('/files/' . ltrim($doc->file_path, '/')) }}',
         '{{ strtoupper($doc->jenis_dokumen) }}'
     )"
     data-bs-toggle="tooltip"
