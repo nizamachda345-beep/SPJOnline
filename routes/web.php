@@ -2,6 +2,7 @@
 // Routes: web
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\{
     AuthController, DashboardController, SubmissionController,
     VerifikasiController, ValidasiController, HistoryController,
@@ -27,6 +28,14 @@ Route::middleware([
     \App\Http\Middleware\EnsureMasterAccessMode::class,
     \App\Http\Middleware\TrackUserActivity::class,
 ])->group(function () {
+
+    // Route: Menggantikan symlink public/storage di Wasmer Edge
+    Route::get('/storage/{path}', function (string $path) {
+        abort_if(str_contains($path, '..'), 403);
+        abort_unless(Storage::disk('public')->exists($path), 404);
+
+        return Storage::disk('public')->response($path);
+    })->where('path', '.*');
 
     Route::post('/access-mode', [AccessModeController::class, 'update'])->name('access-mode.update');
 
@@ -104,17 +113,17 @@ Route::middleware([
         Route::get('/{id}/file', [BaRekonController::class, 'archiveFile'])->name('archive.file');
     });
 
-Route::middleware(['role:operator', 'check.dept.upload'])->group(function () {
-    Route::get('/submission/create', [SubmissionController::class, 'create'])->name('submissions.create');
-    Route::post('/submission/store', [SubmissionController::class, 'store'])->name('submissions.store');
-});
+    Route::middleware(['role:operator', 'check.dept.upload'])->group(function () {
+        Route::get('/submission/create', [SubmissionController::class, 'create'])->name('submissions.create');
+        Route::post('/submission/store', [SubmissionController::class, 'store'])->name('submissions.store');
+    });
 
-Route::middleware('role:operator')->group(function () {
-    Route::put('/submission/{id}/update-revisi', [SubmissionController::class, 'update'])->name('submissions.update');
-    Route::post('/submissions/{id}/upload-spj', [SubmissionController::class, 'uploadSpj'])->name('submissions.uploadSpj');
-    Route::post('/submissions/{id}/upload-sts', [SubmissionController::class, 'uploadSts'])->name('submissions.uploadSts');
-    Route::post('/submissions/{id}/upload-sp2d', [SubmissionController::class, 'uploadSp2d'])->name('submissions.uploadSp2d');
-});
+    Route::middleware('role:operator')->group(function () {
+        Route::put('/submission/{id}/update-revisi', [SubmissionController::class, 'update'])->name('submissions.update');
+        Route::post('/submissions/{id}/upload-spj', [SubmissionController::class, 'uploadSpj'])->name('submissions.uploadSpj');
+        Route::post('/submissions/{id}/upload-sts', [SubmissionController::class, 'uploadSts'])->name('submissions.uploadSts');
+        Route::post('/submissions/{id}/upload-sp2d', [SubmissionController::class, 'uploadSp2d'])->name('submissions.uploadSp2d');
+    });
 
     Route::middleware('role:kasie_bud')->prefix('verifikasi')->name('verifikasi.')->group(function () {
         Route::get('/sp2d', [VerifikasiController::class, 'sp2dIndex'])->name('sp2d');
@@ -158,7 +167,7 @@ Route::middleware('role:operator')->group(function () {
         Route::get('/history/{id}', [HistoryController::class, 'show'])->name('history.show');
     });
 
-        // Function: Menandai semua notifikasi sebagai dibaca
+    // Function: Menandai semua notifikasi sebagai dibaca
     Route::post('/notifications/read-all', function () {
         auth()->user()->unreadNotifications->markAsRead();
         return response()->json(['success' => true]);
