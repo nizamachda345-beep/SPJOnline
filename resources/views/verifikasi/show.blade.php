@@ -320,22 +320,20 @@
                     </td>
 
                     <td class="text-center">
+<button
+    type="button"
+    class="btn btn-document-preview btn-glass-primary btn-sm rounded-pill px-3 fw-bold shadow-sm"
+    onclick="openPdfModal(
+        '{{ url('/files/' . ltrim($doc->file_path, '/')) }}',
+        '{{ strtoupper($doc->jenis_dokumen) }}'
+    )"
+    data-bs-toggle="tooltip"
+    data-bs-placement="top"
+    title="Tinjau dokumen">
 
-                        <button
-                            type="button"
-                            class="btn btn-document-preview btn-glass-primary btn-sm rounded-pill px-3 fw-bold shadow-sm"
-                            onclick="openPdfModal(
-                                '{{ route('storage.file', ['path' => $doc->file_path]) }}',
-                                '{{ strtoupper($doc->jenis_dokumen) }}'
-                            )"
-                            data-bs-toggle="tooltip"
-                            data-bs-placement="top"
-                            title="Tinjau dokumen">
-
-                            <i class="fas fa-eye"></i>
-                            <span>Tinjau</span>
-
-                        </button>
+    <i class="fas fa-eye"></i>
+    <span>Tinjau</span>
+</button>
 
                     </td>
 
