@@ -236,22 +236,22 @@
                             <td class="pe-4 py-3 text-end border-0" style="background: transparent;">
                                 <div class="d-flex justify-content-end gap-2">
 
-<span class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="Pratinjau">
-    <button class="btn btn-outline-primary btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center border-opacity-25 transition-all btn-preview-pdf"
-            style="width: 32px; height: 32px; background: rgba(13, 110, 253, 0.05);"
-            data-url="{{ $doc->preview_url }}"
-            data-download-url="{{ $doc->download_url }}"
-            data-title="{{ $documentLabels[$jenisDokumen] ?? strtoupper($doc->jenis_dokumen) }}"
-            data-spp="{{ $submission->nomor_spp }}"
-            data-spm="{{ $submission->nomor_spm }}"
-            data-kegiatan="{{ $submission->judul_kegiatan }}"
-            data-subkegiatan="{{ $submission->judul_sub_kegiatan }}"
-            data-perihal="{{ $submission->perihal }}"
-            data-nominal="{{ $submission->total_pencairan }}"
-            data-tanggal="{{ $submission->created_at->format('d/m/Y') }}">
-        <i class="fas fa-eye fa-xs text-primary"></i>
-    </button>
-</span>
+                                    <span class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="Pratinjau">
+                                        <button class="btn btn-outline-primary btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center border-opacity-25 transition-all btn-preview-pdf"
+                                                style="width: 32px; height: 32px; background: rgba(13, 110, 253, 0.05);"
+                                                data-url="{{ asset('storage/' . $doc->file_path) }}"
+                                                data-title="{{ $documentLabels[$jenisDokumen] ?? strtoupper($doc->jenis_dokumen) }}"
+                                                data-spp="{{ $submission->nomor_spp }}"
+                                                data-spm="{{ $submission->nomor_spm }}"
+                                                data-kegiatan="{{ $submission->judul_kegiatan }}"
+                                                data-subkegiatan="{{ $submission->judul_sub_kegiatan }}"
+                                                data-perihal="{{ $submission->perihal }}"
+                                                data-nominal="{{ $submission->total_pencairan }}"
+                                                data-tanggal="{{ $submission->created_at->format('d/m/Y') }}">
+                                            <i class="fas fa-eye fa-xs text-primary"></i>
+                                        </button>
+                                    </span>
+
                                     @if($doc->status_dokumen == 'revisi')
                                     <span class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="Revisi Dokumen">
                                         <button class="btn btn-outline-warning btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center border-opacity-25 transition-all"
@@ -346,12 +346,12 @@
                 </div>
             </div>
 
-<div class="modal-footer border-top border-glass-white bg-black-20">
-    <a id="downloadPdfLink" href="#" class="btn btn-glass-info btn-sm px-4" target="_blank" rel="noopener noreferrer">
-        <i class="fas fa-download me-2"></i> Download PDF
-    </a>
-    <button type="button" class="btn btn-glass-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
-</div>
+            <div class="modal-footer border-top border-glass-white bg-black-20">
+                <a id="downloadPdfLink" href="#" class="btn btn-glass-info btn-sm px-4" download>
+                    <i class="fas fa-download me-2"></i> Download PDF
+                </a>
+                <button type="button" class="btn btn-glass-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
@@ -376,12 +376,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (button) {
             e.preventDefault();
 
-            const previewUrl = button.getAttribute('data-url');
-            const downloadUrl = button.getAttribute('data-download-url') || previewUrl;
-
             const data = {
-                url: previewUrl,
-                downloadUrl: downloadUrl,
+                url: button.getAttribute('data-url'),
                 title: button.getAttribute('data-title'),
                 spp: button.getAttribute('data-spp') || '-',
                 spm: button.getAttribute('data-spm') || '-',
@@ -394,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             document.getElementById('pdfFrame').src = data.url;
             document.getElementById('pdfModalTitle').innerText = data.title;
-            document.getElementById('downloadPdfLink').href = data.downloadUrl;
+            document.getElementById('downloadPdfLink').href = data.url;
 
             document.getElementById('infoNomorSpp').innerText = data.spp;
             document.getElementById('infoNomorSpm').innerText = data.spm;
@@ -410,7 +406,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     pdfModalElement.addEventListener('hidden.bs.modal', function () {
         document.getElementById('pdfFrame').src = "";
-        document.getElementById('downloadPdfLink').href = "#";
     });
 });
 </script>
