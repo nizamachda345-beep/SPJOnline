@@ -42,6 +42,20 @@ Route::get('/files/{path}', function (string $path) {
     ]);
 })->where('path', '.*')->name('storage.file');
 
+// Route: Menyajikan file berdasarkan ID Document (aman dari encoded slash %2F di Wasmer Edge)
+Route::get('/dokumen/{document}/file', function (\App\Models\Document $document) {
+    $path = $document->file_path;
+
+    if (empty($path) || !Storage::disk('public')->exists($path)) {
+        abort(404, 'File tidak ditemukan di volume: ' . ($path ?: 'kosong'));
+    }
+
+    return Storage::disk('public')->response($path, basename($path), [
+        'Content-Type'        => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
+    ]);
+})->name('dokumen.file');
+
     Route::post('/access-mode', [AccessModeController::class, 'update'])->name('access-mode.update');
 
     Route::post('/activity/presence', fn () => response()->json(['ok' => true]))
