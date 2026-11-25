@@ -1,0 +1,21 @@
+[package]
+name = "username-anda/nama-aplikasi"
+version = "0.1.0"
+description = "Aplikasi Laravel di Wasmer Edge"
+
+[dependencies]
+"php/php" = "^8.3"
+
+[fs]
+"/app" = "."
+
+[[command]]
+name = "run"
+module = "php/php:php"
+runner = "wasi"
+
+[command.annotations.wasi]
+main-args = ["-S", "0.0.0.0:8080", "-t", "/app/public", "/app/public/index.php"]
+
+[[capability]]
+name = "http-server"
