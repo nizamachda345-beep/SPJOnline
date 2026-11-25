@@ -124,7 +124,7 @@
                                         <td class="text-center">
                                                 <button type="button"
                                                     class="btn btn-document-preview btn-glass-primary bpk-outline-button bpk-preview-trigger btn-sm rounded-pill px-3 fw-bold shadow-sm"
-                                                    data-file-url="{{ {{ route('storage.file', ['path' => $doc->file_path]) }} }}"
+                                                    data-file-url="{{ route('storage.file', ['path' => $doc->file_path]) }}"
                                                     data-doc-title="{{ $documentTitle }}"
                                                     data-metadata="{{ json_encode($previewMetadata) }}"
                                                     onclick="openPreviewModal(this.getAttribute('data-file-url'), this.getAttribute('data-doc-title'), JSON.parse(this.getAttribute('data-metadata')))">

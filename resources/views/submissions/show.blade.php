@@ -239,7 +239,7 @@
                                     <span class="d-inline-block" data-bs-toggle="tooltip" data-bs-placement="top" title="Pratinjau">
                                         <button class="btn btn-outline-primary btn-sm rounded-circle p-0 d-flex align-items-center justify-content-center border-opacity-25 transition-all btn-preview-pdf"
                                                 style="width: 32px; height: 32px; background: rgba(13, 110, 253, 0.05);"
-                                                data-url="{{ {{ route('storage.file', ['path' => $doc->file_path]) }} }}"
+                                                data-url="{{ route('storage.file', ['path' => $doc->file_path]) }}"
                                                 data-title="{{ $documentLabels[$jenisDokumen] ?? strtoupper($doc->jenis_dokumen) }}"
                                                 data-spp="{{ $submission->nomor_spp }}"
                                                 data-spm="{{ $submission->nomor_spm }}"
