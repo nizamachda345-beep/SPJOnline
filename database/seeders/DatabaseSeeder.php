@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
         DepartmentSeeder::class,
         RoleUserSeeder::class,
-        SubmissionSeeder::class, // Tambahkan ini di baris terakhir
+        // SubmissionSeeder::class, // Tambahkan ini di baris terakhir
 
     ]);
 
