@@ -29,13 +29,18 @@ Route::middleware([
     \App\Http\Middleware\TrackUserActivity::class,
 ])->group(function () {
 
-    // Route: Menggantikan symlink public/storage di Wasmer Edge
-    Route::get('/storage/{path}', function (string $path) {
-        abort_if(str_contains($path, '..'), 403);
-        abort_unless(Storage::disk('public')->exists($path), 404);
+   // Route: Menyajikan file dari Wasmer Persistent Storage (pengganti symlink public/storage)
+Route::get('/files/{path}', function (string $path) {
+    abort_if(str_contains($path, '..'), 403, 'Akses tidak valid.');
 
-        return Storage::disk('public')->response($path);
-    })->where('path', '.*');
+    if (!Storage::disk('public')->exists($path)) {
+        abort(404, 'File tidak ditemukan.');
+    }
+
+    return Storage::disk('public')->response($path, basename($path), [
+        'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
+    ]);
+})->where('path', '.*')->name('storage.file');
 
     Route::post('/access-mode', [AccessModeController::class, 'update'])->name('access-mode.update');
 
