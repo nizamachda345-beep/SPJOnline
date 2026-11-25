@@ -8,7 +8,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/css/idj.css', // Tambahkan baris ini secara manual
+                'resources/css/idj.css',
             ],
             refresh: true,
         }),
@@ -20,6 +20,7 @@ export default defineConfig({
         },
     },
     build: {
-        cssMinify: 'lightningcss', // Atau false
+        cssTarget: 'chrome110',
+        cssMinify: 'lightningcss',
     },
 });

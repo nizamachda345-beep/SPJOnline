@@ -1,7 +1,7 @@
-        :root {
+:root {
             color-scheme: light;
             --body-bg: transparent;
-            --surface: rgba(255, 255, 255, 0.97);
+            --surface: rgba(255, 255, 255, 0.7);
             --surface-soft: rgba(248, 249, 250, 0.95);
             --border-muted: rgba(33, 37, 41, 0.08);
             --text-muted: #6c757d;
@@ -27,7 +27,12 @@
             --glass-bg: rgba(255, 255, 255, 0.45); /* Transparansi putih */
             --glass-border: rgba(255, 255, 255, 0.3); /* Border tipis halus */
             --glass-blur: blur(12px); /* Efek blur kaca */
-            --surface: rgba(255, 255, 255, 0.7);
+            --glass-filter-10: blur(10px) saturate(120%);
+            --glass-filter-12: blur(12px) saturate(180%);
+            --glass-filter-15: blur(15px) saturate(180%);
+            --glass-filter-15-soft: blur(15px) saturate(150%);
+            --glass-filter-20: blur(20px) saturate(160%);
+            --glass-filter-20-strong: blur(20px) saturate(180%);
             --glass-dark-bg: rgba(15, 23, 42, 0.7); /* Slate 900 dengan opacity */
             --glass-dark-border: rgba(255, 255, 255, 0.08);
             --accent-info: #38bdf8;
@@ -40,7 +45,6 @@
             color: var(--text-dark);
             font-size: 0.85rem;
             line-height: 1.5;
-
         }
 
         h1, h2, h3, h4, h5, h6 {
@@ -58,8 +62,8 @@
 
         .navbar {
             background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
+            backdrop-filter: var(--glass-blur);
             border-bottom: 1px solid var(--glass-border);
             position: sticky;
             top: 0;
@@ -86,8 +90,8 @@
 
         .card {
             background: var(--glass-bg);
-            backdrop-filter: var(--glass-blur);
             -webkit-backdrop-filter: var(--glass-blur);
+            backdrop-filter: var(--glass-blur);
             border: 1px solid var(--glass-border);
             border-radius: 1.2rem; /* Sudut lebih bulat untuk kesan modern */
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
@@ -195,7 +199,6 @@
             vertical-align: middle;
             font-size: 0.75rem;
             box-shadow: none !important;
-
         }
 
         /* Menghapus background putih paksa dari bootstrap table-hover */
@@ -401,6 +404,7 @@
         /* Sidebar Dark Glass Version */
         .sidebar.sidebar-dark {
             background: rgba(15, 23, 42, 0.6) !important;
+            -webkit-backdrop-filter: blur(15px);
             backdrop-filter: blur(15px);
             border-right: 1px solid rgba(255, 255, 255, 0.1);
         }
@@ -478,7 +482,6 @@
                 width: 100%;
                 height: auto;
             }
-
         }
 
         .sidebar {
@@ -519,7 +522,6 @@
             .sidebar {
                 display: none !important;
             }
-
         }
 
     .progress {
@@ -650,7 +652,6 @@
 
 .btn-pill:hover {
     transform: translateY(-2px);
-
     box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
 }
 
@@ -759,6 +760,7 @@
     font-weight: 900;
     padding: 3px 10px;
     background: rgba(255, 255, 255, 0.5);
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.8);
     border-radius: 100px;
@@ -772,8 +774,8 @@
 /* Base Dark Glass Badge */
 .badge-dark-glass {
     background: rgba(15, 23, 42, 0.6) !important; /* Biru gelap transparan */
-    backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
     padding: 0.5rem 1rem;
     border-radius: 8px;
     font-weight: 700;
@@ -836,14 +838,13 @@
 /* Gaya Pill yang lebih halus */
 .glass-status-pill {
     background: rgba(15, 23, 42, 0.05); /* Light mode glass tint */
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(0, 0, 0, 0.05);
     padding: 4px 12px;
     border-radius: 100px;
     transition: all 0.3s ease;
 }
-
-/* Warna Teks Role (Gunakan warna yang lebih soft tapi kontras) */
 
 /* Jika Navbar menggunakan mode DARK, gunakan ini: */
 .navbar-dark .glass-status-pill {
@@ -1050,10 +1051,10 @@
 
 /* Container Utama Glassmorphism */
 .idj-glass-header {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(15px) saturate(180%);
-    -webkit-backdrop-filter: blur(15px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.4) !important;
+    -webkit-backdrop-filter: var(--glass-filter-15-soft) !important;
+    backdrop-filter: var(--glass-filter-15-soft) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
 }
 
@@ -1232,16 +1233,16 @@
         /* Custom Styles untuk Glassmorphism yang lebih smooth */
         .glass-card-minimal {
             background: rgba(255, 255, 255, 0.4) !important;
-            backdrop-filter: blur(12px) saturate(180%);
-            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: var(--glass-filter-12) !important;
+            backdrop-filter: var(--glass-filter-12) !important;
             border: 1px solid rgba(255, 255, 255, 0.3) !important;
         }
 
         /* Card Utama */
     .glass-card-dark {
         background: var(--glass-dark-bg) !important;
-        backdrop-filter: blur(20px) saturate(160%);
-        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: var(--glass-filter-20) !important;
+        backdrop-filter: var(--glass-filter-20) !important;
         border: 1px solid var(--glass-dark-border) !important;
         border-radius: 24px;
     }
@@ -1275,8 +1276,6 @@
             color: #64748b;
             letter-spacing: 0.3px;
         }
-
-        /* Container Dropdown */
 
 /* Status Indicator */
 .status-indicator-online {
@@ -1314,8 +1313,8 @@
 .dropdown-glass {
     /* Gaya Glassmorphism */
     background: rgba(255, 255, 255, 0.7) !important;
-    backdrop-filter: blur(15px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(15px) saturate(180%) !important;
+    -webkit-backdrop-filter: var(--glass-filter-15) !important;
+    backdrop-filter: var(--glass-filter-15) !important;
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
     border-radius: 20px !important; /* Membuat sudut lebih bulat agar seperti gelembung */
     padding: 0.8rem !important;
@@ -1384,6 +1383,7 @@
     justify-content: center;
     border: 1px solid rgba(0, 0, 0, 0.05);
     background: rgba(255, 255, 255, 0.5);
+    -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
     color: #666;
     font-size: 0.7rem;
@@ -1427,8 +1427,8 @@
 /* Body Tabel Glassmorphism */
 .table-glass-body tbody tr {
     background: rgba(255, 255, 255, 0.5) !important; /* Transparansi */
-    backdrop-filter: blur(8px); /* Efek Blur Kaca */
     -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px); /* Efek Blur Kaca */
     transition: all 0.3s ease;
 }
 
@@ -1436,14 +1436,6 @@
 .table-glass-body tbody tr:hover {
     background: rgba(255, 255, 255, 0.8) !important;
     transform: scale(1.002);
-}
-
-/* Container khusus untuk header agar lebih menyatu dengan background */
-.idj-glass-header {
-    background: rgba(255, 255, 255, 0.4) !important;
-    backdrop-filter: blur(15px) saturate(150%);
-    -webkit-backdrop-filter: blur(15px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Background putih transparan untuk pill statistik */
@@ -1464,8 +1456,8 @@
 /* Body Tabel Glassmorphism */
 .table-glass-history tbody tr {
     background: rgba(255, 255, 255, 0.4) !important;
-    backdrop-filter: blur(10px) saturate(120%);
-    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    -webkit-backdrop-filter: var(--glass-filter-10) !important;
+    backdrop-filter: var(--glass-filter-10) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     transition: all 0.3s ease;
 }
@@ -1502,15 +1494,9 @@
     padding-bottom: 15px !important;
 }
 
-/* Memastikan body tetap transparan glassmorp */
-.table-glass-history tbody tr {
-    background: rgba(255, 255, 255, 0.4) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
-
     .glass-alert {
         background: rgba(255, 71, 71, 0.1);
+        -webkit-backdrop-filter: blur(10px);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 71, 71, 0.2);
         color: #b02a37;
@@ -1525,7 +1511,7 @@
     .table-glass {
         background: transparent;
         table-layout: fixed; /* Memaksa kolom patuh pada lebar yang ditentukan */
-    width: 100%;
+        width: 100%;
     }
 
     .table-glass thead th {
@@ -1544,9 +1530,9 @@
         font-size: 0.75rem;
     }
     .table-responsive {
-    border: none;
-    overflow-x: auto; /* Jika tabel tetap kepanjangan, dia akan scroll di dalam, bukan keluar */
-}
+        border: none;
+        overflow-x: auto; /* Jika tabel tetap kepanjangan, dia akan scroll di dalam, bukan keluar */
+    }
 
 /* Agar nama dokumen tidak merusak layout jika terlalu panjang */
 .text-truncate-custom {
@@ -1560,11 +1546,10 @@
         box-shadow: 0 8px 32px 0 rgba(78, 115, 223, 0.1);
     }
 
-    /* Varian Alert Glass */
-
     /* Form & Input Glass */
     .form-control-glass {
         background: rgba(255, 255, 255, 0.5) !important;
+        -webkit-backdrop-filter: blur(5px);
         backdrop-filter: blur(5px);
         border: 1px solid rgba(255, 255, 255, 0.4);
         border-radius: 12px;
@@ -1667,6 +1652,7 @@
 .bg-primary-soft {
     background-color: rgba(13, 110, 253, 0.08);
 }
+
     body {
         background: radial-gradient(circle at top right, #f8fafc, #e2e8f0);
         min-height: 100vh;
@@ -1674,19 +1660,18 @@
 
     /* Header Dark Glass */
     .glass-header-dark {
-        /* background: var(--dark-header); */
+        -webkit-backdrop-filter: blur(10px);
         backdrop-filter: blur(10px);
         -webkit-font-smoothing: antialiased;
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         border: 1px solid rgba(255, 255, 255, 0.08);
-
     }
 
     /* Core Glass Card */
     .glass-card {
         background: var(--glass-bg);
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: var(--glass-filter-20-strong);
+        backdrop-filter: var(--glass-filter-20-strong);
         border: 1px solid var(--glass-border);
         border-radius: 28px;
         transition: all 0.3s ease;
@@ -1772,6 +1757,7 @@
     /* Modal PDF Customization */
     .glass-modal-pdf {
         background: rgba(255, 255, 255, 0.8);
+        -webkit-backdrop-filter: blur(25px);
         backdrop-filter: blur(25px);
         border: 1px solid white;
         border-radius: 30px;
@@ -1784,11 +1770,10 @@
         border: 1px solid rgba(0,0,0,0.05);
     }
 
-    /* Menghaluskan tampilan font pada dark mode */
-
 .custom-btn-glass {
         /* Status Awal: Gelap & Transparan */
         background: rgba(0, 0, 0, 0.2) !important;
+        -webkit-backdrop-filter: blur(4px);
         backdrop-filter: blur(4px);
         color: rgba(255, 255, 255, 0.8);
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -1854,8 +1839,8 @@
     /* Container Utama Modal */
 .modal-glass-dark .modal-content {
     background: rgba(30, 32, 35, 0.75) !important; /* Soft Dark */
-    backdrop-filter: blur(15px); /* Efek Blur Glass */
     -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px); /* Efek Blur Glass */
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -1882,7 +1867,6 @@
 .glass-input, .glass-input-group, .glass-input-file {
     background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    /* color: white !important; */
     border-radius: 12px !important;
     padding: 10px 15px;
 }
@@ -1941,7 +1925,6 @@
     }
 
     .btn-glass-dark:hover {
-        /* background: rgba(33, 37, 41, 1); */
         transform: scale(1.05);
         color: white;
     }
@@ -1955,7 +1938,6 @@
     }
 
     .btn-glass-warning:hover {
-        /* background: rgba(33, 37, 41, 1); */
         transform: scale(1.05);
         color: white;
     }
@@ -2056,11 +2038,6 @@ tbody tr:hover {
     box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important; /* Mempertegas bayangan */
     z-index: 10;
 }
-
-/* Opsional: Jika ingin area <td> yang memicu scale pada <a> di dalamnya */
-/* td:hover .hover-scale {
-    transform: scale(1.05);
-} */
 
 /* Efek membesarkan seluruh grup tombol */
 .action-group.hover-scale {
@@ -2179,10 +2156,10 @@ tbody tr:hover {
 /* Base Glassmorphism Dark */
 .glass-dark-modal {
     background: rgba(15, 17, 20, 0.85) !important; /* Warna dasar gelap */
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: var(--glass-filter-20) !important;
+    backdrop-filter: var(--glass-filter-20) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 3 !important; /* Minimalis (tidak rounded) */
+    border-radius: 3px !important; /* Minimalis (tidak rounded) */
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
@@ -2218,7 +2195,7 @@ tbody tr:hover {
     background: rgba(79, 195, 247, 0.1);
     color: #4fc3f7;
     border: 1px solid rgba(79, 195, 247, 0.2);
-    border-radius: 4;
+    border-radius: 4px;
     transition: all 0.3s ease;
 }
 .btn-glass-info:hover {
@@ -2231,7 +2208,7 @@ tbody tr:hover {
     background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4;
+    border-radius: 4px;
 }
 .btn-glass-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -2404,21 +2381,6 @@ tbody tr:hover {
 
 @keyframes ticker-pause {
     0% {
-        transform: translateX(100%);
-    }
-    10% {
-        transform: translateX(0%);
-    }
-    85% {
-        transform: translateX(0%); /* Jeda berhenti lebih lama di tengah */
-    }
-    100% {
-        transform: translateX(-100%);
-    }
-}
-
-@keyframes ticker-pause {
-    0% {
         transform: translateX(100%); /* Mulai dari luar sebelah kanan */
     }
     15% {
@@ -2448,8 +2410,8 @@ tbody tr:hover {
     /* Styling Dark Glassmorphic untuk SweetAlert2 */
     .glass-swal-popup {
         background: rgba(30, 30, 46, 0.75) !important;
-        backdrop-filter: blur(16px) !important;
         -webkit-backdrop-filter: blur(16px) !important;
+        backdrop-filter: blur(16px) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 16px !important;
         color: #f8f9fa !important;
@@ -2508,16 +2470,12 @@ tbody tr:hover {
     width: 34px;
     height: 34px;
     flex: 0 0 34px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     border-radius: 7px;
-
     background: rgba(239,68,68,.08);
     color: #f87171;
-
     font-size: 13px;
 }
 
@@ -2541,11 +2499,8 @@ tbody tr:hover {
 .document-badge {
     display: inline-flex;
     align-items: center;
-
     padding: 2px 6px;
-
     border-radius: 4px;
-
     font-size: 8px;
     font-weight: 700;
     letter-spacing: .3px;
@@ -2565,15 +2520,11 @@ tbody tr:hover {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-
     padding: 5px 9px;
-
     border-radius: 6px;
-
     color: #cbd5e1;
     background: rgba(255,255,255,.035);
     border: 1px solid rgba(255,255,255,.07);
-
     font-size: 10px;
 }
 
@@ -2586,7 +2537,6 @@ tbody tr:hover {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-
     font-size: 10px;
     font-weight: 600;
     white-space: nowrap;
@@ -2617,15 +2567,11 @@ tbody tr:hover {
 .document-actions .btn-action {
     width: 29px;
     height: 29px;
-
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
     padding: 0;
-
     border-radius: 6px;
-
     font-size: 10px;
 }
 
@@ -2782,7 +2728,6 @@ tbody tr:hover {
 }
 
 @media (max-width: 768px) {
-
     .info-row {
         flex-direction: column;
         gap: 3px;
@@ -2800,7 +2745,6 @@ tbody tr:hover {
         align-items: flex-start;
         flex-direction: column;
     }
-
 }
 
 /* Baseline readability and keyboard access across the application. */
