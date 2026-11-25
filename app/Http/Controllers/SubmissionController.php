@@ -21,6 +21,13 @@ use Carbon\Carbon;
 
 class SubmissionController extends Controller
 {
+    /**
+     * Mengambil nama disk aktif dari konfigurasi (default 's3' di production/Wasmer Edge).
+     */
+    private function storageDisk(): string
+    {
+        return config('filesystems.default', 's3');
+    }
 
     // Method: documentMatchesType
     private function documentMatchesType(?string $documentType, string $expectedType): bool
@@ -67,7 +74,6 @@ class SubmissionController extends Controller
     // Method: create
     public function create(Request $request): View|RedirectResponse
     {
-
         $user = auth()->guard()->user();
         $userDepartment = $user->department;
 
@@ -99,321 +105,245 @@ class SubmissionController extends Controller
 
     // Method: store
     public function store(Request $request): RedirectResponse
-{
-
-    $user = auth()->guard()->user();
-    $user = $user->load('department');
-    $expiresAt = Carbon::now()->addDays(2);
-
-    if ($user->hasRole('operator')) {
-        $department = $user->department;
-        if (!$department) {
-            return redirect()->route('dashboard')->with('error', 'Akun Anda belum terhubung ke instansi manapun.');
-        }
-
-        $accessContext = $request->attributes->get('department_submission_access');
-        $now = CarbonImmutable::now(app(SystemSettingsService::class)->timezone());
-        $sameRequestSnapshot = is_array($accessContext)
-            && ($accessContext['department_id'] ?? null) === (int) $department->id
-            && ($accessContext['manual_access'] ?? null) === $department->akses_pengajuan_manual
-            && ($accessContext['evaluated_at'] ?? null) instanceof CarbonImmutable
-            && $accessContext['evaluated_at']->format('Y-m-d H:i') === $now->format('Y-m-d H:i')
-            && is_array($accessContext['decision'] ?? null)
-            && array_key_exists('allowed', $accessContext['decision']);
-        $availability = $sameRequestSnapshot
-            ? $accessContext['decision']
-            : app(SystemSettingsService::class)->submissionAvailability($department, $now);
-
-        if (!$availability['allowed']) {
-            return redirect()->route('dashboard')->with('error', $availability['message']);
-        }
-    }
-
-    $documentMaxSizeMb = (int) app(SystemSettingsService::class)->getTyped('submission.document_max_size_mb');
-    $documentMaxSizeKb = $documentMaxSizeMb * 1024;
-
-    $request->validate([
-        'nomor_spp'              => 'required|digits:5',
-        'tanggal_spp'            => 'required|date',
-        'nomor_spm'              => 'required|digits:5',
-        'tanggal_spm'            => 'required|date',
-
-        'jenis_pencairan'        => 'required|in:LS,GU,TU,GU Nihil,TU Nihil,UP',
-
-        'sumber_dana'            => 'required|in:DAU,DBH,PAD,DAK',
-        'tanggal'                => 'required|date',
-        'judul_kegiatan'         => 'required|string|max:255',
-        'judul_sub_kegiatan'     => 'required|string|max:255',
-        'perihal'                => 'required|string',
-        'total_pencairan'        => 'required|numeric',
-    ]);
-
-    $jenisPencairan = $request->input('jenis_pencairan');
-
-    $documentRules = [
-        'files' => 'required|array',
-    ];
-
-    $documentMessages = [
-        'files.required' => 'Dokumen pengajuan wajib diunggah.',
-        'files.array'    => 'Format dokumen pengajuan tidak valid.',
-
-        'files.*.required' => 'Dokumen wajib diunggah.',
-        'files.*.file'     => 'File dokumen tidak valid.',
-        'files.*.mimes'    => 'Format dokumen harus PDF.',
-        'files.*.max'      => 'Ukuran file tidak boleh lebih dari ' . $documentMaxSizeMb . ' MB.',
-    ];
-
-    switch ($jenisPencairan) {
-
-        case 'LS':
-
-            $documentRules['files.ls_dokumen'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentRules['files.spj'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentMessages['files.ls_dokumen.required'] =
-                'Dokumen LS (SPP, Verifikasi SPP/SPM, SPTJM, Billing) wajib diunggah.';
-
-            $documentMessages['files.spj.required'] =
-                'Dokumen SPJ wajib diunggah.';
-
-            break;
-
-        case 'TU':
-
-            $documentRules['files.tu_dokumen'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentMessages['files.tu_dokumen.required'] =
-                'Dokumen TU (SPP, Verifikasi SPP/SPM, SPTJM, Persetujuan BUD) wajib diunggah.';
-
-            break;
-
-        case 'GU':
-
-            $documentRules['files.gu_dokumen'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-                 $documentRules['files.spj'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentMessages['files.gu_dokumen.required'] =
-                'Dokumen GU (SPP, Verifikasi SPP/SPM, SPTJM, Persetujuan BUD) wajib diunggah.';
-              $documentMessages['files.spj.required'] =
-                'Dokumen SPJ wajib diunggah.';
-            break;
-
-        case 'UP':
-
-            $documentRules['files.up_dokumen'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentMessages['files.up_dokumen.required'] =
-                'Dokumen UP (SPP, Verifikasi SPP/SPM, SPTJM) wajib diunggah.';
-
-            break;
-
-        case 'TU Nihil':
-
-            $documentRules['files.spj'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentRules['files.sts'] =
-                'nullable|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentRules['files.sp2d_tu'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentMessages['files.spj.required'] =
-                'Dokumen SPJ wajib diunggah.';
-
-            $documentMessages['files.sp2d_tu.required'] =
-                'Dokumen SP2D pada pengajuan TU wajib diunggah.';
-
-            break;
-
-        case 'GU Nihil':
-
-            $documentRules['files.spj'] =
-                'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentRules['files.sts'] =
-                'nullable|file|mimes:pdf|max:' . $documentMaxSizeKb;
-
-            $documentMessages['files.spj.required'] =
-                'Dokumen SPJ wajib diunggah.';
-
-            break;
-    }
-
-    $request->validate(
-        $documentRules,
-        $documentMessages
-    );
-
-    if (!Storage::exists('public')) {
-        Storage::makeDirectory('public');
-    }
-
-    DB::beginTransaction();
-
-    try {
-
-        $submission = Submission::query()->create([
-            'user_id'            => $user->id,
-            'department_id'      => $user->department_id,
-            'nomor_spp'          => $request->input('nomor_spp'),
-            'tanggal_spp'        => $request->input('tanggal_spp'),
-            'nomor_spm'          => $request->input('nomor_spm'),
-            'tanggal_spm'        => $request->input('tanggal_spm'),
-            'jenis_pencairan'    => $request->input('jenis_pencairan'),
-            'sumber_dana'        => $request->input('sumber_dana'),
-            'tanggal'            => $request->input('tanggal'),
-            'judul_kegiatan'     => $request->input('judul_kegiatan'),
-            'judul_sub_kegiatan' => $request->input('judul_sub_kegiatan'),
-            'perihal'            => $request->input('perihal'),
-            'total_pencairan'    => $request->input('total_pencairan'),
-            'expires_at'         => $expiresAt,
-            'status'             => 'pending',
-        ]);
-
-        if ($request->hasFile('files')) {
-
-            $labels = [
-
-                'ls_dokumen'       => 'Dokumen LS',
-
-                'spj'              => 'Dokumen SPJ',
-
-                'tu_dokumen'       => 'Dokumen TU',
-
-                'gu_dokumen'       => 'Dokumen GU',
-
-                'up_dokumen'       => 'Dokumen UP',
-
-                'tu_nihil_dokumen' => 'Dokumen TU Nihil',
-
-                'sts'              => 'Dokumen STS',
-
-                'sp2d_tu'          => 'SP2D',
-            ];
-
-            foreach ($request->file('files') as $key => $file) {
-
-                if ($file && $file->isValid()) {
-
-                    $namaJenisDokumen = $labels[$key]
-                        ?? ucwords(str_replace('_', ' ', $key));
-
-                    $safeNomorSpm = Str::slug(
-                        $request->input('nomor_spm')
-                    );
-
-                    $fileName =
-                        strtoupper(Str::slug($namaJenisDokumen))
-                        . '_'
-                        . $safeNomorSpm
-                        . '_'
-                        . time()
-                        . '.'
-                        . $file->getClientOriginalExtension();
-
-                    $folderPath =
-                        'arsip/'
-                        . date('Y/m')
-                        . '/'
-                        . Str::slug(
-                            $user->department->nama_dinas ?? 'skpd'
-                        );
-
-                    $path = $file->storeAs(
-                        $folderPath,
-                        $fileName,
-                        'public'
-                    );
-
-                    Document::query()->create([
-                        'submission_id'  => $submission->id,
-                        'jenis_dokumen'  => $namaJenisDokumen,
-                        'file_path'      => $path,
-                        'status_dokumen' => 'pending',
-                    ]);
-                }
+    {
+        $user = auth()->guard()->user();
+        $user = $user->load('department');
+        $expiresAt = Carbon::now()->addDays(2);
+        $disk = $this->storageDisk();
+
+        if ($user->hasRole('operator')) {
+            $department = $user->department;
+            if (!$department) {
+                return redirect()->route('dashboard')->with('error', 'Akun Anda belum terhubung ke instansi manapun.');
+            }
+
+            $accessContext = $request->attributes->get('department_submission_access');
+            $now = CarbonImmutable::now(app(SystemSettingsService::class)->timezone());
+            $sameRequestSnapshot = is_array($accessContext)
+                && ($accessContext['department_id'] ?? null) === (int) $department->id
+                && ($accessContext['manual_access'] ?? null) === $department->akses_pengajuan_manual
+                && ($accessContext['evaluated_at'] ?? null) instanceof CarbonImmutable
+                && $accessContext['evaluated_at']->format('Y-m-d H:i') === $now->format('Y-m-d H:i')
+                && is_array($accessContext['decision'] ?? null)
+                && array_key_exists('allowed', $accessContext['decision']);
+            $availability = $sameRequestSnapshot
+                ? $accessContext['decision']
+                : app(SystemSettingsService::class)->submissionAvailability($department, $now);
+
+            if (!$availability['allowed']) {
+                return redirect()->route('dashboard')->with('error', $availability['message']);
             }
         }
 
-        $additionalData = [
-            'submission_id'   => $submission->id,
-            'nama_operator'   => $user->name,
-            'nama_dinas'      => $user->department->nama_dinas ?? '-',
-            'nomor_spm'       => $request->input('nomor_spm'),
-            'nomor_spp'       => $request->input('nomor_spp'),
-            'jenis_pencairan' => $request->input('jenis_pencairan'),
-            'total_pencairan' => $request->input('total_pencairan'),
+        $documentMaxSizeMb = (int) app(SystemSettingsService::class)->getTyped('submission.document_max_size_mb');
+        $documentMaxSizeKb = $documentMaxSizeMb * 1024;
+
+        $request->validate([
+            'nomor_spp'              => 'required|digits:5',
+            'tanggal_spp'            => 'required|date',
+            'nomor_spm'              => 'required|digits:5',
+            'tanggal_spm'            => 'required|date',
+            'jenis_pencairan'        => 'required|in:LS,GU,TU,GU Nihil,TU Nihil,UP',
+            'sumber_dana'            => 'required|in:DAU,DBH,PAD,DAK',
+            'tanggal'                => 'required|date',
+            'judul_kegiatan'         => 'required|string|max:255',
+            'judul_sub_kegiatan'     => 'required|string|max:255',
+            'perihal'                => 'required|string',
+            'total_pencairan'        => 'required|numeric',
+        ]);
+
+        $jenisPencairan = $request->input('jenis_pencairan');
+
+        $documentRules = [
+            'files' => 'required|array',
         ];
 
-        $targetRoles = [
-            'kabid_perbendaharaan',
-            'kasie_bud',
-            'super_admin'
+        $documentMessages = [
+            'files.required'   => 'Dokumen pengajuan wajib diunggah.',
+            'files.array'      => 'Format dokumen pengajuan tidak valid.',
+            'files.*.required' => 'Dokumen wajib diunggah.',
+            'files.*.file'     => 'File dokumen tidak valid.',
+            'files.*.mimes'    => 'Format dokumen harus PDF.',
+            'files.*.max'      => 'Ukuran file tidak boleh lebih dari ' . $documentMaxSizeMb . ' MB.',
         ];
 
-        $recipients = User::whereHas('roles', function ($q) use ($targetRoles) {
-            $q->whereIn('name', $targetRoles);
-        })->get();
+        switch ($jenisPencairan) {
+            case 'LS':
+                $documentRules['files.ls_dokumen'] = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentRules['files.spj']        = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentMessages['files.ls_dokumen.required'] = 'Dokumen LS (SPP, Verifikasi SPP/SPM, SPTJM, Billing) wajib diunggah.';
+                $documentMessages['files.spj.required']        = 'Dokumen SPJ wajib diunggah.';
+                break;
 
-        foreach ($recipients as $recipient) {
+            case 'TU':
+                $documentRules['files.tu_dokumen'] = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentMessages['files.tu_dokumen.required'] = 'Dokumen TU (SPP, Verifikasi SPP/SPM, SPTJM, Persetujuan BUD) wajib diunggah.';
+                break;
 
-            $recipient->notify(
-                new SystemActivityNotification(
-                    'Pengajuan Baru',
-                    'SPM No. '
-                    . $request->input('nomor_spm')
-                    . ' dari '
-                    . ($user->department->nama_dinas ?? 'Instansi')
-                    . ' menunggu untuk diverifikasi.',
-                    'fa-file-alt',
-                    'primary',
-                    $additionalData
-                )
-            );
+            case 'GU':
+                $documentRules['files.gu_dokumen'] = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentRules['files.spj']        = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentMessages['files.gu_dokumen.required'] = 'Dokumen GU (SPP, Verifikasi SPP/SPM, SPTJM, Persetujuan BUD) wajib diunggah.';
+                $documentMessages['files.spj.required']        = 'Dokumen SPJ wajib diunggah.';
+                break;
+
+            case 'UP':
+                $documentRules['files.up_dokumen'] = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentMessages['files.up_dokumen.required'] = 'Dokumen UP (SPP, Verifikasi SPP/SPM, SPTJM) wajib diunggah.';
+                break;
+
+            case 'TU Nihil':
+                $documentRules['files.spj']     = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentRules['files.sts']     = 'nullable|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentRules['files.sp2d_tu'] = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentMessages['files.spj.required']     = 'Dokumen SPJ wajib diunggah.';
+                $documentMessages['files.sp2d_tu.required'] = 'Dokumen SP2D pada pengajuan TU wajib diunggah.';
+                break;
+
+            case 'GU Nihil':
+                $documentRules['files.spj'] = 'required|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentRules['files.sts'] = 'nullable|file|mimes:pdf|max:' . $documentMaxSizeKb;
+                $documentMessages['files.spj.required'] = 'Dokumen SPJ wajib diunggah.';
+                break;
         }
 
-        DB::commit();
+        $request->validate($documentRules, $documentMessages);
 
-        return redirect()
-            ->route('submissions.index')
-            ->with(
-                'success',
-                'Pengajuan berhasil dikirim dan berlaku selama 2 hari (hingga '
-                . $expiresAt->format('d-m-Y H:i')
-                . ').'
-            );
+        // Hapus pengecekan direktori lokal 'public' karena menggunakan Object Storage (Backblaze B2)
+        if ($disk === 'public' && !Storage::exists('public')) {
+            Storage::makeDirectory('public');
+        }
 
-    } catch (\Throwable $e) {
+        DB::beginTransaction();
 
-        DB::rollBack();
+        try {
+            $submission = Submission::query()->create([
+                'user_id'            => $user->id,
+                'department_id'      => $user->department_id,
+                'nomor_spp'          => $request->input('nomor_spp'),
+                'tanggal_spp'        => $request->input('tanggal_spp'),
+                'nomor_spm'          => $request->input('nomor_spm'),
+                'tanggal_spm'        => $request->input('tanggal_spm'),
+                'jenis_pencairan'    => $request->input('jenis_pencairan'),
+                'sumber_dana'        => $request->input('sumber_dana'),
+                'tanggal'            => $request->input('tanggal'),
+                'judul_kegiatan'     => $request->input('judul_kegiatan'),
+                'judul_sub_kegiatan' => $request->input('judul_sub_kegiatan'),
+                'perihal'            => $request->input('perihal'),
+                'total_pencairan'    => $request->input('total_pencairan'),
+                'expires_at'         => $expiresAt,
+                'status'             => 'pending',
+            ]);
 
-        Log::error(
-            'Gagal Simpan iDJ: ' . $e->getMessage()
-        );
+            if ($request->hasFile('files')) {
+                $labels = [
+                    'ls_dokumen'       => 'Dokumen LS',
+                    'spj'              => 'Dokumen SPJ',
+                    'tu_dokumen'       => 'Dokumen TU',
+                    'gu_dokumen'       => 'Dokumen GU',
+                    'up_dokumen'       => 'Dokumen UP',
+                    'tu_nihil_dokumen' => 'Dokumen TU Nihil',
+                    'sts'              => 'Dokumen STS',
+                    'sp2d_tu'          => 'SP2D',
+                ];
 
-        return back()
-            ->withInput()
-            ->with(
-                'error',
-                'Gagal memproses berkas: ' . $e->getMessage()
-            );
+                foreach ($request->file('files') as $key => $file) {
+                    if ($file && $file->isValid()) {
+                        $namaJenisDokumen = $labels[$key]
+                            ?? ucwords(str_replace('_', ' ', $key));
+
+                        $safeNomorSpm = Str::slug($request->input('nomor_spm'));
+
+                        $fileName = strtoupper(Str::slug($namaJenisDokumen))
+                            . '_'
+                            . $safeNomorSpm
+                            . '_'
+                            . time()
+                            . '.'
+                            . $file->getClientOriginalExtension();
+
+                        $folderPath = 'arsip/'
+                            . date('Y/m')
+                            . '/'
+                            . Str::slug($user->department->nama_dinas ?? 'skpd');
+
+                        $path = $file->storeAs($folderPath, $fileName, $disk);
+
+                        if (!$path) {
+                            throw new \RuntimeException("Gagal mengunggah file {$namaJenisDokumen} ke storage.");
+                        }
+
+                        Document::query()->create([
+                            'submission_id'  => $submission->id,
+                            'jenis_dokumen'  => $namaJenisDokumen,
+                            'file_path'      => $path,
+                            'status_dokumen' => 'pending',
+                        ]);
+                    }
+                }
+            }
+
+            $additionalData = [
+                'submission_id'   => $submission->id,
+                'nama_operator'   => $user->name,
+                'nama_dinas'      => $user->department->nama_dinas ?? '-',
+                'nomor_spm'       => $request->input('nomor_spm'),
+                'nomor_spp'       => $request->input('nomor_spp'),
+                'jenis_pencairan' => $request->input('jenis_pencairan'),
+                'total_pencairan' => $request->input('total_pencairan'),
+            ];
+
+            $targetRoles = [
+                'kabid_perbendaharaan',
+                'kasie_bud',
+                'super_admin'
+            ];
+
+            $recipients = User::whereHas('roles', function ($q) use ($targetRoles) {
+                $q->whereIn('name', $targetRoles);
+            })->get();
+
+            foreach ($recipients as $recipient) {
+                $recipient->notify(
+                    new SystemActivityNotification(
+                        'Pengajuan Baru',
+                        'SPM No. '
+                        . $request->input('nomor_spm')
+                        . ' dari '
+                        . ($user->department->nama_dinas ?? 'Instansi')
+                        . ' menunggu untuk diverifikasi.',
+                        'fa-file-alt',
+                        'primary',
+                        $additionalData
+                    )
+                );
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('submissions.index')
+                ->with(
+                    'success',
+                    'Pengajuan berhasil dikirim dan berlaku selama 2 hari (hingga '
+                    . $expiresAt->format('d-m-Y H:i')
+                    . ').'
+                );
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            Log::error('Gagal Simpan iDJ: ' . $e->getMessage());
+
+            return back()
+                ->withInput()
+                ->with('error', 'Gagal memproses berkas: ' . $e->getMessage());
+        }
     }
-}
 
     // Method: index
     public function index(): View
     {
-
         $user = auth()->guard()->user();
         $isTerkunci = false;
         $submissionBlockMessage = null;
@@ -460,15 +390,15 @@ class SubmissionController extends Controller
 
         $submissionStatus = request('status');
         $statusGroups = [
-            'pending' => ['pending'],
+            'pending'           => ['pending'],
             'proses_verifikasi' => ['proses verifikasi'],
-            'direvisi' => ['direvisi'],
-            'revisi' => ['revisi'],
-            'validasi' => ['proses validasi'],
-            'disetujui' => ['disetujui', 'approved', 'verified'],
-            'ditolak' => ['ditolak', 'rejected'],
-            'expired' => ['expired'],
-            'reset' => ['reset'],
+            'direvisi'          => ['direvisi'],
+            'revisi'            => ['revisi'],
+            'validasi'          => ['proses validasi'],
+            'disetujui'         => ['disetujui', 'approved', 'verified'],
+            'ditolak'           => ['ditolak', 'rejected'],
+            'expired'           => ['expired'],
+            'reset'             => ['reset'],
         ];
 
         if (is_string($submissionStatus) && isset($statusGroups[$submissionStatus])) {
@@ -572,250 +502,206 @@ class SubmissionController extends Controller
         }
 
         $submission->update([
-            'status' => 'pending',
-            'verified_by_name' => null,
-            'verified_at' => null,
+            'status'            => 'pending',
+            'verified_by_name'  => null,
+            'verified_at'       => null,
             'validated_by_name' => null,
-            'validated_at' => null,
+            'validated_at'      => null,
         ]);
 
         return redirect()->back()->with('warning', 'Status berkas berhasil direset ke Pending.');
     }
 
-// Method: update
-public function update(Request $request, int $id): RedirectResponse
-{
-    $submission = Submission::query()
-        ->with(['department', 'user'])
-        ->findOrFail($id);
+    // Method: update
+    public function update(Request $request, int $id): RedirectResponse
+    {
+        $submission = Submission::query()
+            ->with(['department', 'user'])
+            ->findOrFail($id);
 
+        $user = auth()->guard()->user();
+        $db = app('db');
+        $disk = $this->storageDisk();
 
-    $user = auth()->guard()->user();
+        if (
+            $user->hasRole('operator') &&
+            $submission->department_id !== $user->department_id
+        ) {
+            abort(403, 'Anda tidak memiliki hak akses untuk mengubah data pengajuan instansi lain.');
+        }
 
+        if (
+            $submission->expires_at &&
+            Carbon::now()->greaterThan($submission->expires_at)
+        ) {
+            if ($submission->status !== 'expired') {
+                $submission->update(['status' => 'expired']);
+                $submission->documents()->update(['status_dokumen' => 'expired']);
+            }
 
-    $db = app('db');
+            return redirect()
+                ->route('submissions.index')
+                ->with('error', 'Gagal memperbarui! Pengajuan ini sudah melewati batas masa kedaluwarsa 3 hari.');
+        }
 
-    if (
-        $user->hasRole('operator') &&
-        $submission->department_id !== $user->department_id
-    ) {
-        abort(
-            403,
-            'Anda tidak memiliki hak akses untuk mengubah data pengajuan instansi lain.'
-        );
-    }
+        if ($submission->status === 'expired') {
+            return redirect()
+                ->route('submissions.index')
+                ->with('error', 'Pengajuan ini sudah kedaluwarsa dan tidak dapat diubah.');
+        }
 
-    if (
-        $submission->expires_at &&
-        Carbon::now()->greaterThan($submission->expires_at)
-    ) {
+        if (in_array($submission->status, ['verified', 'approved'])) {
+            return redirect()
+                ->route('submissions.index')
+                ->with('error', 'Pengajuan yang sudah diverifikasi/disetujui tidak dapat diubah kembali.');
+        }
 
-        if ($submission->status !== 'expired') {
-            $submission->update([
-                'status' => 'expired'
-            ]);
+        $isDetailRevision =
+            $request->hasFile('files') &&
+            !$request->filled('tanggal_spp') &&
+            !$request->filled('tanggal_spm');
 
-            $submission->documents()->update([
-                'status_dokumen' => 'expired'
+        if ($isDetailRevision) {
+            $request->merge([
+                'nomor_spp'       => $submission->nomor_spp,
+                'tanggal_spp'     => $submission->tanggal_spp,
+                'nomor_spm'       => $submission->nomor_spm,
+                'tanggal_spm'     => $submission->tanggal_spm,
+                'total_pencairan' => $submission->total_pencairan,
             ]);
         }
 
-        return redirect()
-            ->route('submissions.index')
-            ->with(
-                'error',
-                'Gagal memperbarui! Pengajuan ini sudah melewati batas masa kedaluwarsa 3 hari.'
-            );
-    }
+        $documentMaxSizeMb = (int) app(SystemSettingsService::class)->getTyped('submission.document_max_size_mb');
+        $documentMaxSizeKb = $documentMaxSizeMb * 1024;
 
-    if ($submission->status === 'expired') {
-        return redirect()
-            ->route('submissions.index')
-            ->with(
-                'error',
-                'Pengajuan ini sudah kedaluwarsa dan tidak dapat diubah.'
-            );
-    }
-
-    if (in_array($submission->status, ['verified', 'approved'])) {
-        return redirect()
-            ->route('submissions.index')
-            ->with(
-                'error',
-                'Pengajuan yang sudah diverifikasi/disetujui tidak dapat diubah kembali.'
-            );
-    }
-
-    $isDetailRevision =
-        $request->hasFile('files') &&
-        !$request->filled('tanggal_spp') &&
-        !$request->filled('tanggal_spm');
-
-    if ($isDetailRevision) {
-
-        $request->merge([
-            'nomor_spp'       => $submission->nomor_spp,
-            'tanggal_spp'     => $submission->tanggal_spp,
-            'nomor_spm'       => $submission->nomor_spm,
-            'tanggal_spm'     => $submission->tanggal_spm,
-            'total_pencairan' => $submission->total_pencairan,
-        ]);
-    }
-
-    $documentMaxSizeMb = (int) app(SystemSettingsService::class)->getTyped('submission.document_max_size_mb');
-    $documentMaxSizeKb = $documentMaxSizeMb * 1024;
-
-    $request->validate([
-        'nomor_spp'       => 'required|numeric',
-        'nomor_spm'       => 'required|numeric',
-        'tanggal_spp'     => 'required|date',
-        'tanggal_spm'     => 'required|date',
-        'total_pencairan' => 'required|numeric',
-
-        'files'           => 'nullable|array',
-        'files.*'         => 'nullable|mimes:pdf|max:' . $documentMaxSizeKb,
-    ]);
-
-    $db->beginTransaction();
-
-    try {
-
-        $submission->update([
-            'nomor_spp'        => $request->input('nomor_spp'),
-            'tanggal_spp'      => $request->input('tanggal_spp'),
-            'nomor_spm'        => $request->input('nomor_spm'),
-            'tanggal_spm'      => $request->input('tanggal_spm'),
-            'total_pencairan'  => $request->input('total_pencairan'),
-
-            'status'           => 'direvisi',
-            'verified_by_name' => null,
-            'verified_at'      => null,
-            'revised_at'       => now(),
+        $request->validate([
+            'nomor_spp'       => 'required|numeric',
+            'nomor_spm'       => 'required|numeric',
+            'tanggal_spp'     => 'required|date',
+            'tanggal_spm'     => 'required|date',
+            'total_pencairan' => 'required|numeric',
+            'files'           => 'nullable|array',
+            'files.*'         => 'nullable|mimes:pdf|max:' . $documentMaxSizeKb,
         ]);
 
-        if ($request->hasFile('files')) {
+        $db->beginTransaction();
 
-            $files = $request->file('files');
+        try {
+            $submission->update([
+                'nomor_spp'        => $request->input('nomor_spp'),
+                'tanggal_spp'      => $request->input('tanggal_spp'),
+                'nomor_spm'        => $request->input('nomor_spm'),
+                'tanggal_spm'      => $request->input('tanggal_spm'),
+                'total_pencairan'  => $request->input('total_pencairan'),
+                'status'           => 'direvisi',
+                'verified_by_name' => null,
+                'verified_at'      => null,
+                'revised_at'       => now(),
+            ]);
 
-            if (is_array($files)) {
+            if ($request->hasFile('files')) {
+                $files = $request->file('files');
 
-                foreach ($files as $docId => $file) {
+                if (is_array($files)) {
+                    foreach ($files as $docId => $file) {
+                        if (!$file || !$file->isValid()) {
+                            continue;
+                        }
 
-                    if (!$file || !$file->isValid()) {
-                        continue;
+                        $document = Document::query()
+                            ->where('id', $docId)
+                            ->where('submission_id', $submission->id)
+                            ->firstOrFail();
+
+                        $safeNomorSpm = Str::slug($request->input('nomor_spm'));
+
+                        $fileName = strtoupper($document->jenis_dokumen)
+                            . '_'
+                            . $safeNomorSpm
+                            . '_'
+                            . time()
+                            . '.'
+                            . $file->getClientOriginalExtension();
+
+                        $folderPath = 'arsip/'
+                            . date('Y/m')
+                            . '/'
+                            . Str::slug($submission->department->nama_dinas ?? 'skpd');
+
+                        if (
+                            !empty($document->file_path) &&
+                            Storage::disk($disk)->exists($document->file_path)
+                        ) {
+                            Storage::disk($disk)->delete($document->file_path);
+                        }
+
+                        $path = $file->storeAs($folderPath, $fileName, $disk);
+
+                        if (!$path) {
+                            throw new \RuntimeException("Gagal mengunggah revisi dokumen {$document->jenis_dokumen}.");
+                        }
+
+                        $document->update([
+                            'file_path'      => $path,
+                            'status_dokumen' => 'direvisi',
+                        ]);
                     }
-
-                    $document = Document::query()
-                        ->where('id', $docId)
-                        ->where('submission_id', $submission->id)
-                        ->firstOrFail();
-
-                    $safeNomorSpm = Str::slug(
-                        $request->input('nomor_spm')
-                    );
-
-                    $fileName =
-                        strtoupper($document->jenis_dokumen)
-                        . '_'
-                        . $safeNomorSpm
-                        . '_'
-                        . time()
-                        . '.'
-                        . $file->getClientOriginalExtension();
-
-                    $folderPath =
-                        'arsip/'
-                        . date('Y/m')
-                        . '/'
-                        . Str::slug(
-                            $submission->department->nama_dinas ?? 'skpd'
-                        );
-
-                    if (
-                        !empty($document->file_path) &&
-                        Storage::disk('public')->exists(
-                            $document->file_path
-                        )
-                    ) {
-                        Storage::disk('public')->delete(
-                            $document->file_path
-                        );
-                    }
-
-                    $path = $file->storeAs(
-                        $folderPath,
-                        $fileName,
-                        'public'
-                    );
-
-                    $document->update([
-                        'file_path'      => $path,
-                        'status_dokumen' => 'direvisi',
-                    ]);
                 }
             }
-        }
 
-        $additionalData = [
-            'submission_id'   => $submission->id,
-            'nama_operator'   => $user->name,
-            'nama_dinas'      => $submission->department->nama_dinas ?? '-',
-            'nomor_spm'       => $request->input('nomor_spm'),
-            'nomor_spp'       => $request->input('nomor_spp'),
-            'total_pencairan' => $request->input('total_pencairan'),
-            'status'          => 'direvisi',
-        ];
+            $additionalData = [
+                'submission_id'   => $submission->id,
+                'nama_operator'   => $user->name,
+                'nama_dinas'      => $submission->department->nama_dinas ?? '-',
+                'nomor_spm'       => $request->input('nomor_spm'),
+                'nomor_spp'       => $request->input('nomor_spp'),
+                'total_pencairan' => $request->input('total_pencairan'),
+                'status'          => 'direvisi',
+            ];
 
-        $targetRoles = [
-            'kasie_bud',
-            'super_admin'
-        ];
+            $targetRoles = [
+                'kasie_bud',
+                'super_admin'
+            ];
 
-        $recipients = User::whereHas('roles', function ($q) use ($targetRoles) {
-            $q->whereIn('name', $targetRoles);
-        })->get();
+            $recipients = User::whereHas('roles', function ($q) use ($targetRoles) {
+                $q->whereIn('name', $targetRoles);
+            })->get();
 
-        if ($recipients->isNotEmpty()) {
+            if ($recipients->isNotEmpty()) {
+                Notification::send(
+                    $recipients,
+                    new SystemActivityNotification(
+                        'Perbaikan Dokumen',
+                        'Revisi SPM No. '
+                        . $request->input('nomor_spm')
+                        . ' dari '
+                        . ($submission->department->nama_dinas ?? 'Instansi')
+                        . ' siap ditinjau kembali.',
+                        'fa-sync',
+                        'warning',
+                        $additionalData
+                    )
+                );
+            }
 
-            Notification::send(
-                $recipients,
-                new SystemActivityNotification(
-                    'Perbaikan Dokumen',
-                    'Revisi SPM No. '
-                    . $request->input('nomor_spm')
-                    . ' dari '
-                    . ($submission->department->nama_dinas ?? 'Instansi')
-                    . ' siap ditinjau kembali.',
-                    'fa-sync',
-                    'warning',
-                    $additionalData
-                )
+            $db->commit();
+
+            return back()->with(
+                'success',
+                'Revisi dikirim ulang ke verifikator. Mohon menunggu proses verifikasi ulang.'
             );
+
+        } catch (\Throwable $e) {
+            $db->rollBack();
+
+            Log::error('Gagal Update Revisi iDJ: ' . $e->getMessage());
+
+            return back()
+                ->withInput()
+                ->with('error', 'Gagal memproses perbaikan: ' . $e->getMessage());
         }
-
-        $db->commit();
-
-        return back()->with(
-            'success',
-            'Revisi dikirim ulang ke verifikator. Mohon menunggu proses verifikasi ulang.'
-        );
-
-    } catch (\Throwable $e) {
-
-        $db->rollBack();
-
-        Log::error(
-            'Gagal Update Revisi iDJ: ' . $e->getMessage()
-        );
-
-        return back()
-            ->withInput()
-            ->with(
-                'error',
-                'Gagal memproses perbaikan: ' . $e->getMessage()
-            );
     }
-}
 
     // Method: uploadSpj
     public function uploadSpj(Request $request, int $id): RedirectResponse
@@ -827,6 +713,7 @@ public function update(Request $request, int $id): RedirectResponse
 
         $submission = Submission::with(['department', 'user', 'documents'])->findOrFail($id);
         $user = auth()->guard()->user();
+        $disk = $this->storageDisk();
 
         if ($user->hasRole('operator') && $submission->department_id !== $user->department_id) {
             abort(403, 'Anda tidak memiliki hak akses untuk pengajuan instansi lain.');
@@ -851,7 +738,7 @@ public function update(Request $request, int $id): RedirectResponse
             $path = $file->storeAs(
                 $folder,
                 'DOKUMEN_SPJ_' . Str::slug($submission->nomor_spm) . '_' . $submission->id . '_' . Str::random(8) . '.pdf',
-                'public'
+                $disk
             );
 
             if (! $path) {
@@ -860,22 +747,22 @@ public function update(Request $request, int $id): RedirectResponse
 
             if ($existingDocument) {
                 $existingDocument->update([
-                    'file_path' => $path,
+                    'file_path'      => $path,
                     'status_dokumen' => 'uploaded',
-                    'catatan' => null,
+                    'catatan'        => null,
                 ]);
             } else {
                 Document::create([
-                    'submission_id' => $submission->id,
-                    'jenis_dokumen' => 'DOKUMEN SPJ',
-                    'file_path' => $path,
+                    'submission_id'  => $submission->id,
+                    'jenis_dokumen'  => 'DOKUMEN SPJ',
+                    'file_path'      => $path,
                     'status_dokumen' => 'uploaded',
-                    'catatan' => null,
+                    'catatan'        => null,
                 ]);
             }
 
-            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
+            if ($oldPath && Storage::disk($disk)->exists($oldPath)) {
+                Storage::disk($disk)->delete($oldPath);
             }
 
             $this->notifyDocumentUploaded($submission, 'DOKUMEN SPJ');
@@ -901,6 +788,7 @@ public function update(Request $request, int $id): RedirectResponse
 
         $submission = Submission::with(['department', 'user', 'documents'])->findOrFail($id);
         $user = auth()->guard()->user();
+        $disk = $this->storageDisk();
 
         if ($user->hasRole('operator') && $submission->department_id !== $user->department_id) {
             abort(403, 'Anda tidak memiliki hak akses untuk pengajuan instansi lain.');
@@ -925,7 +813,7 @@ public function update(Request $request, int $id): RedirectResponse
             $path = $file->storeAs(
                 $folder,
                 'STS_' . Str::slug($submission->nomor_spm) . '_' . $submission->id . '_' . Str::random(8) . '.pdf',
-                'public'
+                $disk
             );
 
             if (! $path) {
@@ -934,22 +822,22 @@ public function update(Request $request, int $id): RedirectResponse
 
             if ($existingDocument) {
                 $existingDocument->update([
-                    'file_path' => $path,
+                    'file_path'      => $path,
                     'status_dokumen' => 'uploaded',
-                    'catatan' => null,
+                    'catatan'        => null,
                 ]);
             } else {
                 Document::create([
-                    'submission_id' => $submission->id,
-                    'jenis_dokumen' => 'STS',
-                    'file_path' => $path,
+                    'submission_id'  => $submission->id,
+                    'jenis_dokumen'  => 'STS',
+                    'file_path'      => $path,
                     'status_dokumen' => 'uploaded',
-                    'catatan' => null,
+                    'catatan'        => null,
                 ]);
             }
 
-            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
+            if ($oldPath && Storage::disk($disk)->exists($oldPath)) {
+                Storage::disk($disk)->delete($oldPath);
             }
 
             $this->notifyDocumentUploaded($submission, 'STS');
@@ -974,8 +862,8 @@ public function update(Request $request, int $id): RedirectResponse
         ]);
 
         $submission = Submission::with(['department', 'user', 'documents'])->findOrFail($id);
-
         $user = auth()->guard()->user();
+        $disk = $this->storageDisk();
 
         if ($user->hasRole('operator') && $submission->department_id !== $user->department_id) {
             abort(403, 'Unauthorized action.');
@@ -1003,13 +891,18 @@ public function update(Request $request, int $id): RedirectResponse
 
         if ($request->hasFile('sp2d_file')) {
             $file = $request->file('sp2d_file');
-            $filename = 'sp2d_' . time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('documents/sp2d', $filename, 'public');
+            $filename = 'sp2d_' . time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('documents/sp2d', $filename, $disk);
+
+            if (! $path) {
+                return back()->with('error', 'Gagal mengunggah dokumen SP2D ke storage.');
+            }
 
             $document = $submission->documents->first(
                 fn (Document $item) => $this->documentMatchesType($item->jenis_dokumen, 'SP2D')
             );
 
+            $oldPath = $document?->file_path;
             $newStatus = $document ? 'direvisi' : 'uploaded';
 
             if ($document) {
@@ -1018,6 +911,10 @@ public function update(Request $request, int $id): RedirectResponse
                     'status_dokumen' => $newStatus,
                     'catatan'        => null,
                 ]);
+
+                if ($oldPath && Storage::disk($disk)->exists($oldPath)) {
+                    Storage::disk($disk)->delete($oldPath);
+                }
             } else {
                 Document::create([
                     'submission_id'  => $submission->id,
@@ -1042,7 +939,7 @@ public function update(Request $request, int $id): RedirectResponse
     {
         $request->validate([
             'action_type' => 'required|in:approve,reject',
-            'catatan' => 'required_if:action_type,reject|string|max:500',
+            'catatan'     => 'required_if:action_type,reject|string|max:500',
         ], [
             'catatan.required_if' => 'Catatan penolakan wajib diisi agar operator mengetahui bagian yang harus diperbaiki.',
         ]);
@@ -1072,15 +969,15 @@ public function update(Request $request, int $id): RedirectResponse
         if ($request->action_type === 'approve') {
             $document->update([
                 'status_dokumen' => 'verified',
-                'catatan' => null,
+                'catatan'        => null,
             ]);
             $submission->status_sp2d = 'lengkap';
             $submission->save();
 
             $additionalData = [
                 'submission_id' => $submission->id,
-                'nomor_spm' => $submission->nomor_spm,
-                'status_sp2d' => 'lengkap',
+                'nomor_spm'     => $submission->nomor_spm,
+                'status_sp2d'   => 'lengkap',
             ];
 
             foreach ($operators as $operator) {
@@ -1099,16 +996,16 @@ public function update(Request $request, int $id): RedirectResponse
         $catatan = $request->input('catatan');
         $document->update([
             'status_dokumen' => 'revisi',
-            'catatan' => $catatan,
+            'catatan'        => $catatan,
         ]);
         $submission->status_sp2d = 'revisi';
         $submission->save();
 
         $additionalData = [
             'submission_id' => $submission->id,
-            'nomor_spm' => $submission->nomor_spm,
-            'status_sp2d' => 'revisi',
-            'catatan' => $catatan,
+            'nomor_spm'     => $submission->nomor_spm,
+            'status_sp2d'   => 'revisi',
+            'catatan'       => $catatan,
         ];
 
         foreach ($operators as $operator) {
@@ -1124,12 +1021,12 @@ public function update(Request $request, int $id): RedirectResponse
         return back()->with('error', 'SP2D ditolak dan dikembalikan ke operator untuk perbaikan.');
     }
 
-// Method: destroy
-public function destroy(int $id): RedirectResponse
+    // Method: destroy
+    public function destroy(int $id): RedirectResponse
     {
         $submission = Submission::query()->with(['documents', 'department'])->findOrFail($id);
-
         $user = auth()->guard()->user();
+        $disk = $this->storageDisk();
 
         if ($user->hasRole('operator')) {
             if ($submission->department_id !== $user->department_id) {
@@ -1139,10 +1036,8 @@ public function destroy(int $id): RedirectResponse
                 return redirect()->route('submissions.index')
                     ->with('error', 'Pengajuan yang sudah diproses atau disetujui tidak dapat dihapus oleh Operator.');
             }
-        }
-        elseif ($user->hasRole('super_admin')) {
-        }
-        else {
+        } elseif ($user->hasRole('super_admin')) {
+        } else {
             abort(403, 'Unauthorized action.');
         }
 
@@ -1151,8 +1046,7 @@ public function destroy(int $id): RedirectResponse
         try {
             $submissionArray = $submission->toArray();
             $noSpm = $submissionArray['nomor_spm'] ?? 'ID #' . $submission->id;
-
-            $namaDinas = $submission->department->name ?? 'Dinas Terkait';
+            $namaDinas = $submission->department->nama_dinas ?? $submission->department->name ?? 'Dinas Terkait';
 
             DB::table('submission_logs')->insert([
                 'submission_id'   => $submission->id,
@@ -1166,8 +1060,8 @@ public function destroy(int $id): RedirectResponse
             ]);
 
             foreach ($submission->documents as $document) {
-                if (!empty($document->file_path) && Storage::disk('public')->exists($document->file_path)) {
-                    Storage::disk('public')->delete($document->file_path);
+                if (!empty($document->file_path) && Storage::disk($disk)->exists($document->file_path)) {
+                    Storage::disk($disk)->delete($document->file_path);
                 }
             }
 
@@ -1191,7 +1085,7 @@ public function destroy(int $id): RedirectResponse
                 'url'           => route('submissions.index'),
             ];
 
-            \Illuminate\Support\Facades\Notification::send(
+            Notification::send(
                 $recipients,
                 new SystemActivityNotification($title, $message, $icon, $type, $additionalData)
             );
@@ -1211,7 +1105,6 @@ public function destroy(int $id): RedirectResponse
     // Method: backup
     public function backup(Request $request)
     {
-
         $user = auth()->guard()->user();
 
         $query = Submission::query()->with(['department', 'user', 'documents']);
@@ -1236,7 +1129,7 @@ public function destroy(int $id): RedirectResponse
             "Expires"             => "0"
         ];
 
-        $callback = function() use ($submissions) {
+        $callback = function () use ($submissions) {
             $file = fopen('php://output', 'w');
 
             fputcsv($file, [
@@ -1298,8 +1191,8 @@ public function destroy(int $id): RedirectResponse
         return response()->stream($callback, 200, $headers);
     }
 
-  // Method: downloadPdfBundle
-  public function downloadPdfBundle(int $id)
+    // Method: downloadPdfBundle
+    public function downloadPdfBundle(int $id)
     {
         $submission = Submission::query()->with(['department', 'user', 'documents'])->findOrFail($id);
 
@@ -1311,15 +1204,14 @@ public function destroy(int $id): RedirectResponse
 
         $zip = new \ZipArchive;
         $zipFileName = 'REKAP TRANSAKSI SPM NO. ' . $submission->nomor_spm . '.zip';
-        $zipPath = storage_path('app/public/' . $zipFileName);
+        // Gunakan direktori temporary sistem agar aman di Wasmer Edge
+        $zipPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . uniqid('zip_', true) . '_' . $zipFileName;
 
-        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-
-            $zip->addFromString('RINGKASAN TRANSAKSI SPM NO. ' . $submission->nomor_spm .'.pdf', $pdfOutput);
-
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            $zip->addFromString('RINGKASAN TRANSAKSI SPM NO. ' . $submission->nomor_spm . '.pdf', $pdfOutput);
             $zip->close();
         }
 
-        return response()->download($zipPath)->deleteFileAfterSend(true);
+        return response()->download($zipPath, $zipFileName)->deleteFileAfterSend(true);
     }
 }
