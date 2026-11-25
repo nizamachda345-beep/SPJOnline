@@ -63,7 +63,7 @@
                                 </div>
                                     <button type="button"
                                             class="btn btn-glass-primary btn-sm rounded-pill px-3 fw-bold shadow-sm"
-                                            data-url="{{ asset('storage/' . $doc->file_path) }}"
+                                            data-url="{{ {{ route('storage.file', ['path' => $doc->file_path]) }} }}"
                                             data-title="{{ strtoupper(str_replace('_', ' ', $doc->jenis_dokumen)) }}"
                                             data-bs-toggle="modal"
                                             data-bs-target="#modalPreview">

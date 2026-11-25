@@ -184,7 +184,7 @@
 
                                     @php
 
-                                        $filePathUrl = asset('storage/' . $doc->file_path);
+                                        $filePathUrl = {{ route('storage.file', ['path' => $doc->file_path]) }};
 
                                         $isImageDoc = preg_match(
                                             '/\.(jpg|jpeg|png|webp|gif)$/i',
