@@ -80,7 +80,7 @@
 
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-dark align-middle m-0 bpk-document-table">
+                        <table class="table table-dark table-hover align-middle m-0 bpk-document-table">
                             <thead>
                                 <tr class="text-white-50 small">
                                     <th class="ps-4 py-3 border-0">Dokumen</th>
@@ -415,8 +415,6 @@
     </div>
 </div>
 
-
-
 <script>
 if (typeof window.pdfBlobCache === 'undefined') {
     window.pdfBlobCache = {};
@@ -526,9 +524,7 @@ document.addEventListener('keydown', function(event) {
     }
     @endif
 });
-
 </script>
-
 
 <style>
 /* CSS LINE TIMELINE CENTER ALIGNMENT */
@@ -546,9 +542,10 @@ document.addEventListener('keydown', function(event) {
 .timeline-item.is-last .timeline-badge-col::before {
     display: none;
 }
+
 /* Styling Utama Popup SweetAlert2 Glassmorphism */
 .swal-glass-popup {
-    background: rgba(20, 24, 33, 0.75) !important; /* Warna gelap transparan */
+    background: rgba(20, 24, 33, 0.75) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -556,24 +553,20 @@ document.addEventListener('keydown', function(event) {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Warna Teks Judul */
 .swal-glass-title {
     color: #ffffff !important;
     font-weight: 600;
 }
 
-/* Warna Teks Deskripsi/Konten */
 .swal-glass-text {
     color: rgba(255, 255, 255, 0.75) !important;
     font-size: 0.95rem;
 }
 
-/* Merapikan Jarak Antar Tombol */
 .swal-glass-popup .swal2-actions {
     gap: 10px;
 }
 
-/* Efek Hover Khusus Tombol Konfirmasi Sukses agar Sinkron dengan Tombol Navigasi Anda sebelumnya */
 .dynamic-nav-swal {
     transition: all 0.2s ease;
 }
@@ -586,9 +579,9 @@ document.addEventListener('keydown', function(event) {
 }
 
 .custom-textarea-glass::placeholder {
-    color: rgba(255, 255, 255, 0.7) !important; /* Putih agak soft (70% opacity) agar lebih elegan */
+    color: rgba(255, 255, 255, 0.7) !important;
     font-style: italic;
-    opacity: 1; /* Diperlukan bagi browser Firefox agar opacity defaultnya tidak menimpa */
+    opacity: 1;
 }
 
 .bpk-audit-page {
@@ -715,23 +708,65 @@ document.addEventListener('keydown', function(event) {
     padding-top: 0.85rem;
 }
 
-.bpk-document-table {
-    --bs-table-bg: transparent;
-    --bs-table-color: #f8fafc;
-    --bs-table-border-color: rgba(255, 255, 255, 0.08);
+/* ============================================================
+   PERBAIKAN TABEL LAMPIRAN DOKUMEN & ANTI-WHITE HOVER
+   ============================================================ */
+.bpk-audit-page .bpk-document-table,
+.bpk-audit-page .bpk-document-table.table-hover {
+    --bs-table-bg: transparent !important;
+    --bs-table-color: #f8fafc !important;
+    --bs-table-border-color: rgba(255, 255, 255, 0.08) !important;
+    --bs-table-accent-bg: transparent !important;
+    --bs-table-hover-bg: rgba(56, 189, 248, 0.12) !important;
+    --bs-table-hover-color: #ffffff !important;
 }
 
-.bpk-document-table thead th {
-    background: rgba(12, 19, 34, 0.48);
-    color: rgba(255, 255, 255, 0.58);
+.bpk-audit-page .bpk-document-table thead th {
+    background: rgba(12, 19, 34, 0.48) !important;
+    color: rgba(255, 255, 255, 0.58) !important;
     font-size: 0.68rem;
     letter-spacing: 0.045em;
     text-transform: uppercase;
 }
 
-.bpk-document-table tbody td {
+.bpk-audit-page .bpk-document-table tbody tr {
+    background-color: transparent !important;
+    transition: background-color 0.2s ease;
+}
+
+.bpk-audit-page .bpk-document-table tbody td {
     padding-top: 0.85rem;
     padding-bottom: 0.85rem;
+    background-color: transparent !important;
+}
+
+/* Kunci warna hover agar tidak berubah putih oleh CSS global */
+.bpk-audit-page .bpk-document-table.table-hover > tbody > tr:hover,
+.bpk-audit-page .bpk-document-table > tbody > tr:hover {
+    --bs-table-accent-bg: rgba(56, 189, 248, 0.12) !important;
+    background-color: rgba(56, 189, 248, 0.12) !important;
+    color: #ffffff !important;
+}
+
+.bpk-audit-page .bpk-document-table.table-hover > tbody > tr:hover > *,
+.bpk-audit-page .bpk-document-table > tbody > tr:hover > td,
+.bpk-audit-page .bpk-document-table > tbody > tr:hover > th {
+    --bs-table-accent-bg: rgba(56, 189, 248, 0.12) !important;
+    background-color: rgba(56, 189, 248, 0.12) !important;
+    box-shadow: inset 0 0 0 9999px rgba(56, 189, 248, 0.12) !important;
+    color: #ffffff !important;
+}
+
+.bpk-audit-page .bpk-document-table tbody tr:hover small,
+.bpk-audit-page .bpk-document-table tbody tr:hover .text-white-50 {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Highlight otomatis tombol Tinjau saat baris di-hover */
+.bpk-audit-page .bpk-document-table tbody tr:hover .bpk-preview-trigger {
+    background: rgba(14, 165, 233, 0.25) !important;
+    border-color: #7dd3fc !important;
+    color: #ffffff !important;
 }
 
 .bpk-outline-button {
@@ -768,7 +803,7 @@ document.addEventListener('keydown', function(event) {
 .bpk-preview-trigger:hover,
 .bpk-preview-trigger:focus-visible {
     border-color: rgba(125, 211, 252, 0.95) !important;
-    background: rgba(14, 165, 233, 0.2) !important;
+    background: rgba(14, 165, 233, 0.25) !important;
 }
 
 .bpk-document-icon,
@@ -902,7 +937,6 @@ document.addEventListener('keydown', function(event) {
         min-width: 600px;
     }
 }
-
 </style>
 
 @endsection
