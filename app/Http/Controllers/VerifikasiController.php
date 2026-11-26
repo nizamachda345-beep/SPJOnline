@@ -159,53 +159,34 @@ class VerifikasiController extends Controller
         ));
     }
 
-    // Method: show
-    public function show(Request $request, $id)
+public function show(Request $request, $id)
     {
         $submission = Submission::with([
             'department',
             'documents'
         ])->findOrFail($id);
 
+        $currentStatus = strtolower(trim($submission->status ?? ''));
+
         $isSp2dVerificationMode =
-            in_array(
-                strtolower(trim($submission->status ?? '')),
-                ['disetujui', 'approved'],
-                true
-            )
+            in_array($currentStatus, ['disetujui', 'approved'], true)
             &&
             in_array(
-                strtolower(
-                    trim(
-                        $submission->status_sp2d ?? ''
-                    )
-                ),
-                [
-                    'uploaded',
-                    'direvisi'
-                ],
+                strtolower(trim($submission->status_sp2d ?? '')),
+                ['uploaded', 'direvisi'],
                 true
             )
             &&
             !in_array(
-                $this->normalizeDocumentType(
-                    $submission->jenis_pencairan
-                ),
-                [
-                    'tu nihil',
-                    'tunihil'
-                ],
+                $this->normalizeDocumentType($submission->jenis_pencairan),
+                ['tu nihil', 'tunihil'],
                 true
             );
 
         if ($isSp2dVerificationMode) {
-
             $requiredDocumentIds = [];
-
             $totalDocs = 1;
-
             $verifiedDocs = 0;
-
             $isAllVerified = false;
             $backRouteName = $request->query('source') === 'sp2d'
                 ? 'verifikasi.sp2d'
@@ -223,6 +204,17 @@ class VerifikasiController extends Controller
                     'backRouteName'
                 )
             );
+        }
+
+        // BLOK PROTEKSI: Jika bukan mode SP2D, hanya izinkan status 'pending' atau 'direvisi'
+        if (!in_array($currentStatus, ['pending', 'direvisi'], true)) {
+            $redirectRoute = $request->query('source') === 'sp2d'
+                ? 'verifikasi.sp2d'
+                : 'verifikasi.index';
+
+            return redirect()
+                ->route($redirectRoute)
+                ->with('warning', 'Pengajuan ini sudah selesai diverifikasi (Status: ' . strtoupper($submission->status) . ') dan tidak dapat diakses kembali melalui halaman verifikasi.');
         }
 
         $requiredDocumentIds =
@@ -520,186 +512,112 @@ class VerifikasiController extends Controller
         );
     }
 
-    // Method: documentAction
+// Method: documentAction
     public function documentAction(
         Request $request,
         $docId
     ) {
-
-        $verifier =
-            auth()->guard()->user();
+        $verifier = auth()->guard()->user();
 
         $doc = Document::with([
             'submission.department',
             'submission.user'
-        ])->findOrFail(
-            $docId
-        );
+        ])->findOrFail($docId);
 
-        $submission =
-            $doc->submission;
+        $submission = $doc->submission;
+        $currentStatus = strtolower(trim($submission->status ?? ''));
 
-        if (
-            $this->isSp2dDocument(
-                $this->normalizeDocumentType(
-                    $doc->jenis_dokumen
-                )
-            )
-            &&
-            !in_array(
-                $this->normalizeDocumentType(
-                    $submission->jenis_pencairan
-                ),
-                [
-                    'tu nihil',
-                    'tunihil'
-                ],
-                true
-            )
-        ) {
+        // Proteksi: Cegah perubahan status dokumen jika pengajuan sudah keluar dari antrean verifikasi
+        if (!in_array($currentStatus, ['pending', 'direvisi'], true)) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Berkas sudah terkunci karena pengajuan sedang dalam tahap ' . $submission->status . '.'
+                ], 422);
+            }
 
-            return response()->json([
-                'success' => false,
-                'message' =>
-                    'Dokumen SP2D harus diverifikasi melalui proses verifikasi SP2D.'
-            ], 422);
+            return redirect()
+                ->route('verifikasi.index')
+                ->with('error', 'Berkas sudah terkunci dan tidak dapat diubah.');
         }
 
         if (
-            $request->action === 'setuju'
+            $this->isSp2dDocument(
+                $this->normalizeDocumentType($doc->jenis_dokumen)
+            )
+            &&
+            !in_array(
+                $this->normalizeDocumentType($submission->jenis_pencairan),
+                ['tu nihil', 'tunihil'],
+                true
+            )
         ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dokumen SP2D harus diverifikasi melalui proses verifikasi SP2D.'
+            ], 422);
+        }
 
+        if ($request->action === 'setuju') {
             $doc->update([
                 'status_dokumen' => 'verified',
                 'catatan' => null
             ]);
-        }
-
-        elseif (
-            $request->action === 'revisi'
-        ) {
-
+        } elseif ($request->action === 'revisi') {
             $doc->update([
                 'status_dokumen' => 'revisi',
                 'catatan' => $request->catatan
             ]);
         }
 
-        if (
-            !in_array(
-                $submission->status,
-                [
-                    'disetujui',
-                    'selesai',
-                    'history'
-                ]
-            )
-        ) {
+        $revisiDocsCount = $submission
+            ->documents()
+            ->where('status_dokumen', 'revisi')
+            ->count();
 
-            $revisiDocsCount =
-                $submission
-                    ->documents()
-                    ->where(
-                        'status_dokumen',
-                        'revisi'
-                    )
-                    ->count();
-
-            $submissionPayload = [
-                'status' =>
-                    $revisiDocsCount > 0
-                        ? 'revisi'
-                        : 'pending'
-            ];
-
-            if (
-                $revisiDocsCount > 0
-            ) {
-
-                $submissionPayload[
-                    'revisi_at'
-                ] = now();
-
-                $submissionPayload[
-                    'tolak_by'
-                ] = $verifier->id;
-            }
-
-            $submission->update(
-                $submissionPayload
-            );
-        }
-
-        $additionalData = [
-
-            'submission_id' => $submission->id,
-
-            'verifier_nama' =>
-                $verifier->name,
-
-            'nama_dinas' =>
-                $submission
-                    ->department
-                    ->nama_dinas
-                ?? '-',
-
-            'nomor_spm' =>
-                $submission->nomor_spm,
-
-            'nomor_spp' =>
-                $submission->nomor_spp,
-
-            'jenis_dokumen' =>
-                $doc->jenis_dokumen,
-
-            'status_dokumen' =>
-                $doc->status_dokumen,
-
-            'catatan' =>
-                $request->catatan ?? null
+        $submissionPayload = [
+            'status' => $revisiDocsCount > 0 ? 'revisi' : 'pending'
         ];
 
-        if (
-            $request->action === 'revisi'
-            &&
-            $submission->user
-        ) {
+        if ($revisiDocsCount > 0) {
+            $submissionPayload['revisi_at'] = now();
+            $submissionPayload['tolak_by'] = $verifier->id;
+        }
 
+        $submission->update($submissionPayload);
+
+        $additionalData = [
+            'submission_id' => $submission->id,
+            'verifier_nama' => $verifier->name,
+            'nama_dinas' => $submission->department->nama_dinas ?? '-',
+            'nomor_spm' => $submission->nomor_spm,
+            'nomor_spp' => $submission->nomor_spp,
+            'jenis_dokumen' => $doc->jenis_dokumen,
+            'status_dokumen' => $doc->status_dokumen,
+            'catatan' => $request->catatan ?? null
+        ];
+
+        if ($request->action === 'revisi' && $submission->user) {
             $submission->user->notify(
                 new SystemActivityNotification(
-
                     'Revisi Dokumen Diperlukan',
-
                     'SPM No.' .
                     $submission->nomor_spm .
                     ' perlu direvisi. ' .
                     'Instruksi: Periksa catatan dan lakukan perbaikan dokumen.',
-
                     'fa-exclamation-triangle',
-
                     'warning',
-
                     $additionalData
                 )
             );
         }
 
-        if (
-            $request->ajax()
-        ) {
-
+        if ($request->ajax()) {
             return response()->json([
-
                 'success' => true,
-
-                'message' =>
-                    'Status berkas berhasil diperbarui.',
-
-                'status_dokumen' =>
-                    $doc->status_dokumen,
-
-                'submission_status' =>
-                    $submission->status
+                'message' => 'Status berkas berhasil diperbarui.',
+                'status_dokumen' => $doc->status_dokumen,
+                'submission_status' => $submission->status
             ]);
         }
 
@@ -714,160 +632,96 @@ class VerifikasiController extends Controller
         Request $request,
         $id
     ) {
+        $verifier = auth()->guard()->user();
 
-        $verifier =
-            auth()->guard()->user();
+        $submission = Submission::with([
+            'documents',
+            'user',
+            'department'
+        ])->findOrFail($id);
 
-        $submission =
-            Submission::with([
-                'documents',
-                'user',
-                'department'
-            ])->findOrFail(
-                $id
-            );
+        $currentStatus = strtolower(trim($submission->status ?? ''));
 
-        if (
-            strtolower(
-                trim(
-                    $submission->status ?? ''
-                )
-            ) === 'disetujui'
-        ) {
-
+        if ($currentStatus === 'disetujui') {
             return back()->with(
                 'error',
                 'Pengajuan ini sudah disetujui. Verifikasi SP2D dilakukan melalui proses khusus.'
             );
         }
 
-        $requiredDocumentIds =
-            $this->getRequiredDocumentIds(
-                $submission
-            );
+        // Proteksi: Cegah pengiriman ulang jika sudah diverifikasi / diteruskan ke Kabid
+        if (!in_array($currentStatus, ['pending', 'direvisi'], true)) {
+            return redirect()
+                ->route('verifikasi.index')
+                ->with(
+                    'error',
+                    'Pengajuan ini sudah diverifikasi dan sedang dalam tahap ' . $submission->status . '.'
+                );
+        }
 
-        if (
-            empty(
-                $requiredDocumentIds
-            )
-        ) {
+        $requiredDocumentIds = $this->getRequiredDocumentIds($submission);
 
+        if (empty($requiredDocumentIds)) {
             return back()->with(
                 'error',
                 'Gagal! Dokumen wajib untuk jenis pencairan ini belum tersedia.'
             );
         }
 
-        $requiredDocuments =
-            $submission
-                ->documents
-                ->whereIn(
-                    'id',
-                    $requiredDocumentIds
-                );
+        $requiredDocuments = $submission
+            ->documents
+            ->whereIn('id', $requiredDocumentIds);
 
-        $unverifiedDocuments =
-            $requiredDocuments
-                ->filter(
-                    function ($doc) {
+        $unverifiedDocuments = $requiredDocuments->filter(
+            function ($doc) {
+                return $doc->status_dokumen !== 'verified';
+            }
+        );
 
-                        return $doc->status_dokumen
-                            !== 'verified';
-                    }
-                );
-
-        if (
-            $unverifiedDocuments->count() > 0
-        ) {
-
-            $namaDokumen =
-                $unverifiedDocuments
-                    ->map(
-                        function ($doc) {
-
-                            return strtoupper(
-                                str_replace(
-                                    '_',
-                                    ' ',
-                                    $doc->jenis_dokumen
-                                )
-                            );
-                        }
-                    )
-                    ->implode(', ');
+        if ($unverifiedDocuments->count() > 0) {
+            $namaDokumen = $unverifiedDocuments
+                ->map(function ($doc) {
+                    return strtoupper(
+                        str_replace('_', ' ', $doc->jenis_dokumen)
+                    );
+                })
+                ->implode(', ');
 
             return back()->with(
                 'error',
-                'Gagal! Dokumen wajib belum diverifikasi: ' .
-                $namaDokumen
+                'Gagal! Dokumen wajib belum diverifikasi: ' . $namaDokumen
             );
         }
 
         $submission->update([
-
-            'status' =>
-                'proses validasi',
-
-            'verified_by' =>
-                $verifier->id,
-
-            'verified_by_name' =>
-                $verifier->name,
-
-            'verified_at' =>
-                now(),
-
-            'sent_to_kabid_at' =>
-                now(),
-
-            'sent_to_kabid_by_name' =>
-                $verifier->name
+            'status' => 'proses validasi',
+            'verified_by' => $verifier->id,
+            'verified_by_name' => $verifier->name,
+            'verified_at' => now(),
+            'sent_to_kabid_at' => now(),
+            'sent_to_kabid_by_name' => $verifier->name
         ]);
 
         $additionalData = [
-
             'submission_id' => $submission->id,
-
-            'verifier_nama' =>
-                $verifier->name,
-
-            'nama_dinas' =>
-                $submission
-                    ->department
-                    ->nama_dinas
-                ?? '-',
-
-            'nomor_spm' =>
-                $submission->nomor_spm,
-
-            'nomor_spp' =>
-                $submission->nomor_spp,
-
-            'total_pencairan' =>
-                $submission->total_pencairan,
-
-            'status' =>
-                'proses validasi'
+            'verifier_nama' => $verifier->name,
+            'nama_dinas' => $submission->department->nama_dinas ?? '-',
+            'nomor_spm' => $submission->nomor_spm,
+            'nomor_spp' => $submission->nomor_spp,
+            'total_pencairan' => $submission->total_pencairan,
+            'status' => 'proses validasi'
         ];
 
-        if (
-            $submission->user
-        ) {
-
+        if ($submission->user) {
             $submission->user->notify(
                 new SystemActivityNotification(
-
                     'Permintaan Terverifikasi',
-
                     'SPM No.' .
                     $submission->nomor_spm .
                     ' telah diverifikasi. ' .
                     'Instruksi: Menunggu proses Validasi.',
-
                     'fa-paper-plane',
-
                     'info',
-
                     $additionalData
                 )
             );
@@ -878,56 +732,32 @@ class VerifikasiController extends Controller
             'super_admin'
         ];
 
-        $recipients =
-            User::whereHas(
-                'roles',
-                function ($q) use (
-                    $targetRoles
-                ) {
+        $recipients = User::whereHas(
+            'roles',
+            function ($q) use ($targetRoles) {
+                $q->whereIn('name', $targetRoles);
+            }
+        )->get();
 
-                    $q->whereIn(
-                        'name',
-                        $targetRoles
-                    );
-                }
-            )->get();
-
-        foreach (
-            $recipients
-            as $recipient
-        ) {
-
+        foreach ($recipients as $recipient) {
             $recipient->notify(
                 new SystemActivityNotification(
-
                     'Menunggu Validasi',
-
-                    'SPM No.' .
                     'SPM No.' .
                     $submission->nomor_spm .
                     ' (' .
-                    (
-                        $submission
-                            ->department
-                            ->nama_dinas
-                        ?? 'SKPD'
-                    ) .
+                    ($submission->department->nama_dinas ?? 'SKPD') .
                     ') siap diperiksa. ' .
                     'Instruksi: Lakukan validasi dokumen.',
-
                     'fa-paper-plane',
-
                     'info',
-
                     $additionalData
                 )
             );
         }
 
         return redirect()
-            ->route(
-                'verifikasi.index'
-            )
+            ->route('verifikasi.index')
             ->with(
                 'success',
                 'Berkas berhasil diteruskan untuk Proses Validasi.'
@@ -939,96 +769,65 @@ class VerifikasiController extends Controller
         Request $request,
         $id
     ) {
-
         $request->validate([
-            'catatan' =>
-                'required|string|min:5'
+            'catatan' => 'required|string|min:5'
         ]);
 
+        $verifier = auth()->guard()->user();
 
-        $verifier =
-            auth()->guard()->user();
+        $submission = Submission::with([
+            'user',
+            'department'
+        ])->findOrFail($id);
 
-        $submission =
-            Submission::with([
-                'user',
-                'department'
-            ])->findOrFail(
-                $id
-            );
+        $currentStatus = strtolower(trim($submission->status ?? ''));
+
+        // Proteksi: Cegah penolakan jika pengajuan sudah bukan di antrean verifikasi
+        if (!in_array($currentStatus, ['pending', 'direvisi'], true)) {
+            return redirect()
+                ->route('verifikasi.index')
+                ->with(
+                    'error',
+                    'Pengajuan ini sudah diproses dan tidak dapat ditolak dari halaman verifikasi.'
+                );
+        }
 
         $submission->update([
-
-            'status' =>
-                'revisi',
-
-            'catatan' =>
-                $request->catatan,
-
-            'revisi_at' =>
-                now(),
-
-            'tolak_by' =>
-                $verifier->id
+            'status' => 'revisi',
+            'catatan' => $request->catatan,
+            'revisi_at' => now(),
+            'tolak_by' => $verifier->id
         ]);
 
         $additionalData = [
-
             'submission_id' => $submission->id,
-
-            'verifier_nama' =>
-                $verifier->name,
-
-            'nama_dinas' =>
-                $submission
-                    ->department
-                    ->nama_dinas
-                ?? '-',
-
-            'nomor_spm' =>
-                $submission->nomor_spm,
-
-            'nomor_spp' =>
-                $submission->nomor_spp,
-
-            'total_pencairan' =>
-                $submission->total_pencairan,
-
-            'catatan_tolak' =>
-                $request->catatan,
-
-            'status' =>
-                'revisi'
+            'verifier_nama' => $verifier->name,
+            'nama_dinas' => $submission->department->nama_dinas ?? '-',
+            'nomor_spm' => $submission->nomor_spm,
+            'nomor_spp' => $submission->nomor_spp,
+            'total_pencairan' => $submission->total_pencairan,
+            'catatan_tolak' => $request->catatan,
+            'status' => 'revisi'
         ];
 
-        if (
-            $submission->user
-        ) {
-
+        if ($submission->user) {
             $submission->user->notify(
                 new SystemActivityNotification(
-
                     'Pengajuan Ditolak',
-
                     'SPM #' .
                     $submission->nomor_spm .
                     ' ditolak. Catatan: "' .
                     $request->catatan .
                     '". Instruksi: Perbaiki dokumen yang terlampir.',
-
                     'fa-undo',
-
                     'danger',
-
                     $additionalData
                 )
             );
         }
 
         return redirect()
-            ->route(
-                'verifikasi.index'
-            )
+            ->route('verifikasi.index')
             ->with(
                 'error',
                 'Pengajuan ditolak.'
