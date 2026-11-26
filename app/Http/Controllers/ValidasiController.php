@@ -111,7 +111,7 @@ class ValidasiController extends Controller
         );
     }
 
-    // Method: show
+// Method: show
     public function show($id)
     {
         $submission = Submission::with([
@@ -120,6 +120,16 @@ class ValidasiController extends Controller
             'user',
             'penolakKabid'
         ])->findOrFail($id);
+
+        // Proteksi: Hanya pengajuan dengan status 'proses validasi' yang boleh dibuka di halaman validasi
+        if (strtolower(trim($submission->status ?? '')) !== 'proses validasi') {
+            return redirect()
+                ->route('validasi.index')
+                ->with(
+                    'warning',
+                    'Pengajuan ini sudah selesai divalidasi (Status: ' . strtoupper($submission->status) . ') dan tidak dapat diakses kembali melalui halaman validasi.'
+                );
+        }
 
         return view(
             'validasi.show',
@@ -356,27 +366,24 @@ class ValidasiController extends Controller
         ];
     }
 
-    // Method: sahkan
+// Method: sahkan
     public function sahkan($id)
     {
-
         $validator = auth()->guard()->user();
 
         return DB::transaction(function () use (
             $id,
             $validator
         ) {
-
             $submission = Submission::with([
                 'user',
                 'department',
                 'documents'
-            ])->findOrFail($id);
+            ])
+            ->lockForUpdate()
+            ->findOrFail($id);
 
-            if (
-                $submission->status !== 'proses validasi'
-            ) {
-
+            if (strtolower(trim($submission->status ?? '')) !== 'proses validasi') {
                 return redirect()
                     ->route('validasi.index')
                     ->with(
@@ -385,48 +392,26 @@ class ValidasiController extends Controller
                     );
             }
 
-            $check = $this->checkValidationCompleteness(
-                $submission
-            );
+            $check = $this->checkValidationCompleteness($submission);
 
             if (!$check['is_complete']) {
-
                 $messages = [];
 
-                if (
-                    count($check['missing']) > 0
-                ) {
+                if (count($check['missing']) > 0) {
                     $messages[] =
                         'Dokumen wajib belum diunggah: ' .
-                        implode(
-                            ', ',
-                            $check['missing']
-                        );
+                        implode(', ', $check['missing']);
                 }
 
-                if (
-                    count($check['not_verified']) > 0
-                ) {
+                if (count($check['not_verified']) > 0) {
                     $messages[] =
                         'Dokumen wajib belum diverifikasi: ' .
-                        implode(
-                            ', ',
-                            $check['not_verified']
-                        );
+                        implode(', ', $check['not_verified']);
                 }
 
                 return redirect()
-                    ->route(
-                        'validasi.show',
-                        $submission->id
-                    )
-                    ->with(
-                        'error',
-                        implode(
-                            ' ',
-                            $messages
-                        )
-                    );
+                    ->route('validasi.show', $submission->id)
+                    ->with('error', implode(' ', $messages));
             }
 
             $submission->update([
@@ -442,16 +427,11 @@ class ValidasiController extends Controller
 
             $requiresFinalSp2d = in_array(
                 $jenis,
-                [
-                    'LS',
-                    'TU',
-                    'GU'
-                ],
+                ['LS', 'TU', 'GU'],
                 true
             );
 
             if ($submission->user) {
-
                 $additionalData = [
                     'submission_id'   => $submission->id,
                     'validator_nama'  => $validator->name,
@@ -464,14 +444,11 @@ class ValidasiController extends Controller
                 ];
 
                 if ($requiresFinalSp2d) {
-
                     $notificationMessage =
                         'Pengajuan transaksi dari ' .
                         ($submission->department->nama_dinas ?? 'SKPD') .
                         ' telah divalidasi. Silakan unggah dokumen SP2D untuk melengkapi proses.';
-
                 } else {
-
                     $notificationMessage =
                         'Pengajuan transaksi dari ' .
                         ($submission->department->nama_dinas ?? 'SKPD') .
@@ -483,9 +460,7 @@ class ValidasiController extends Controller
                         'SPM No. ' .
                         $submission->nomor_spm .
                         ' Telah Divalidasi',
-
                         $notificationMessage,
-
                         'fa-check-circle',
                         'success',
                         $additionalData
@@ -502,13 +477,12 @@ class ValidasiController extends Controller
         });
     }
 
-    // Method: tolak
+// Method: tolak
     public function tolak(Request $request, $id)
     {
         $request->validate([
             'catatan' => 'required|string|min:5',
         ]);
-
 
         $validator = auth()->guard()->user();
 
@@ -517,17 +491,28 @@ class ValidasiController extends Controller
             $id,
             $validator
         ) {
-
             $submission = Submission::with([
                 'user',
                 'department'
-            ])->findOrFail($id);
+            ])
+            ->lockForUpdate()
+            ->findOrFail($id);
+
+            // Proteksi: Cegah penolakan ulang jika status sudah berubah dari 'proses validasi'
+            if (strtolower(trim($submission->status ?? '')) !== 'proses validasi') {
+                return redirect()
+                    ->route('validasi.index')
+                    ->with(
+                        'error',
+                        'Pengajuan ini sudah selesai diproses dan tidak dapat ditolak lagi.'
+                    );
+            }
 
             $submission->update([
-                'status'        => 'rejected',
-                'catatan_kabid' => $request->catatan,
-                'rejected_at'   => now(),
-                'tolak_by_kabid'=> $validator->id,
+                'status'         => 'rejected',
+                'catatan_kabid'  => $request->catatan,
+                'rejected_at'    => now(),
+                'tolak_by_kabid' => $validator->id,
             ]);
 
             $submission->documents()->update([
@@ -550,17 +535,14 @@ class ValidasiController extends Controller
             ];
 
             if ($submission->user) {
-
                 $submission->user->notify(
                     new SystemActivityNotification(
                         'SPM No. ' .
                         $submission->nomor_spm .
                         ' Perlu Perbaikan',
-
                         'Permintaan ditolak. Catatan: "' .
                         $request->catatan .
                         '". Silakan lakukan perbaikan berkas dan ajukan kembali.',
-
                         'fa-times-circle',
                         'danger',
                         $additionalData
@@ -577,6 +559,7 @@ class ValidasiController extends Controller
         });
     }
 
+    
     // Method: previewPdf
     public function previewPdf($id)
     {
